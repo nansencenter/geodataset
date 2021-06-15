@@ -1,0 +1,13 @@
+---
+version: '3'
+services:
+  regridder_jupyter:
+    build: '.'
+    environment:
+      PYTHONPATH: '/opt/notebooks'
+    volumes:
+      - './regridder:/opt/notebooks'
+    working_dir: '/opt/notebooks'
+    ports:
+      - '8888:8888'
+...
