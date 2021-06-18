@@ -1,0 +1,11 @@
+---
+version: '3'
+services:
+  jupyter:
+    build: '.'
+    volumes:
+      - './regridder:/opt/notebooks'
+    working_dir: '/opt/notebooks'
+    ports:
+      - '8888:8888'
+...
