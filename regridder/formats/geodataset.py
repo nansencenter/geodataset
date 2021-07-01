@@ -1,13 +1,12 @@
-from netCDF4 import Dataset
-import pyproj
-from pyresample.geometry import AreaDefinition
-from pyresample.utils import load_cf_area
-from variable_helpers import exchange_names
-from variable_helpers import var_object
-from time_helpers import get_time_name, get_time_converter
-import numpy as np
 from datetime import datetime
 
+import numpy as np
+import pyproj
+from netCDF4 import Dataset
+from pyresample.geometry import AreaDefinition
+from pyresample.utils import load_cf_area
+from time_helpers import get_time_converter, get_time_name
+from variable_helpers import exchange_names, var_object
 
 
 class GeoDataset():
@@ -34,8 +33,6 @@ class GeoDataset():
         """
         # NB kwargs is not used, but is there as a dummy to avoid having to sort kwargs
         # before calling this function
-
-        #check_names(vname, self.variables)
 
         with Dataset(self.file_path) as nc:
             vblname = exchange_names(vblname, nc.variables)
@@ -160,6 +157,17 @@ class GeoDataset():
 
         self.number_of_time_records = len(self.datetimes)
 
+    def nearestDate(self, pivot):
+        """
+        dto,time_index = self.nearestDate(dto0)
+        dto0  = datetime.datetime object
+        dto    = datetime.datetime object - nearest value in self.datetimes to dto0
+        time_index: dto=self.datetimes[time_index]
+        """
+        dto        = min(self.datetimes, key=lambda x: abs(x - pivot))
+        time_index = self.datetimes.index(dto)
+        return dto, time_index
+
 
 class NoneStandardGeoDataset(GeoDataset):
     """class for costimzed manner of reading 'area_defintion'"""
@@ -210,18 +218,6 @@ class NoneStandardGeoDataset(GeoDataset):
         self.number_of_cells_y = self.nc_dataset.dimensions[self.name_of_y_in_netcdf_dimensions].size
         self.shape = (self.number_of_cells_y, self.number_of_cells_x)
 
-    def _calculate_corner_and_extent(self):
-        """calculate corner and extent"""
-        self.scene_length_x = self.x_ur - self.x_ll
-        self.scene_length_y = self.y_ll - self.y_ur
-        self.cell_size_x = self.scene_length_x/(self.number_of_cells_x - 1)
-        self.cell_size_y = self.scene_length_y/(self.number_of_cells_y - 1)
-
-        self.x_corner_ll = self.x_ll - self.cell_size_x/2
-        self.x_corner_ur = self.x_ur + self.cell_size_x/2
-        self.y_corner_ll = self.y_ll - self.cell_size_y/2
-        self.y_corner_ur = self.y_ur + self.cell_size_y/2
-        self.area_extent = (self.x_corner_ll, self.y_corner_ll, self.x_corner_ur, self.y_corner_ur)
 
     def _set_area_id(self):
         self.area_id = 'id for '+self.__class__.__name__+' object'
