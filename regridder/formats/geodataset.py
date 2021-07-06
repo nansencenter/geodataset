@@ -12,16 +12,13 @@ from variable_helpers import exchange_names, var_object
 class GeoDataset():
     def __init__(self, file_path):
         self.file_path = file_path
-        self._charaterize()
+        self._load_area()
 
-    def _charaterize(self):
+    def _load_area(self):
         """self.area is set in this method, either by use of pyresample functionality (load_cf_area)"""
         self.area, _ = load_cf_area(self.file_path)
 
-    def _set__nc_dataset__with_netcdf_python_module(self):
-        self.nc_dataset = Dataset(self.file_path)
-
-    def _get_var(self, vblname, time_index=None,
+    def get_var(self, vblname, time_index=None,
             depth_index=0, ij_range=None, **kwargs):
         """
         vbl=nc_get_var(ncfil, vblname, time_index=None)
@@ -169,22 +166,16 @@ class GeoDataset():
         return dto, time_index
 
 
-class NoneStandardGeoDataset(GeoDataset):
+class CustomAreaDefinitionBase(GeoDataset):
     """class for costimzed manner of reading 'area_defintion'"""
-    def __init__(self, file_path):
-        super().__init__(file_path)
 
-    def _charaterize(self):
-        self._set__nc_dataset__with_netcdf_python_module()
+    def _load_area(self):
         self._find_proj4_string()
         self._instantiate_pyproj_based_on_proj4_string()
-        self._find_x_and_y_for_lower_left_pixel()
-        self._find_x_and_y_for_upper_right_pixel()
+        self._find_x_and_y_for_corners()
         self._calculate_number_of_cells_and_shape()
         self._calculate_corner_and_extent()
         self._set_area_id()
-        self._define_area()
-        self._delete_unecessary_properties()
 
     def _find_proj4_string(self):
         self.proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
@@ -192,57 +183,30 @@ class NoneStandardGeoDataset(GeoDataset):
     def _instantiate_pyproj_based_on_proj4_string(self):
         self.proj = pyproj.Proj(self.proj4_string)
 
-    def _find_x_and_y_for_lower_left_pixel(self):
-        """x and y for lower left pixel is obtained by converting the corresponding corner lat and lon
-        into x and y format"""
-        self.x_ll, self.y_ll = self._find_x_and_y_of_pixel(self.first_index_of_lower_left_corner,
-                                                           self.second_index_of_lower_left_corner)
-
-    def _find_x_and_y_for_upper_right_pixel(self):
+    def _find_x_and_y_for_corners(self):
         """x and y for upper right pixel is obtained by converting the corresponding corner lat and lon
         into x and y format"""
-        self.x_ur, self.y_ur = self._find_x_and_y_of_pixel(self.first_index_of_upper_right_corner,
-                                                           self.second_index_of_upper_right_corner)
-
-    def _find_x_and_y_of_pixel(self, first_index, second_index):
-        """find x ,y of pixel by pyproj"""
-        return self.proj(
-            self.nc_dataset[self.name_of_longitude_in_netcdf][first_index, second_index],
-            self.nc_dataset[self.name_of_latitude_in_netcdf][first_index, second_index]
-                        )
-
+        with Dataset(self.file_path) as nc:
+            x, y = self.proj(
+                        nc[self.lon_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]],
+                        nc[self.lat_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]]
+                            )
+        #since we passed (in above line) the "ll" the first and then "ur" as the second, the "ur"
+        # is always at [1,1] matrix and "ll" is always at [0,0]
+        self.x_ur = x[1,1]
+        self.x_ll = x[0,0]
+        self.y_ur = y[1,1]
+        self.y_ll = y[0,0]
 
     def _calculate_number_of_cells_and_shape(self):
         """calculate number of cells and shape"""
-        self.number_of_cells_x = self.nc_dataset.dimensions[self.name_of_x_in_netcdf_dimensions].size
-        self.number_of_cells_y = self.nc_dataset.dimensions[self.name_of_y_in_netcdf_dimensions].size
+        with Dataset(self.file_path) as nc:
+            self.number_of_cells_x = nc.dimensions[self.name_of_x_in_netcdf_dimensions].size
+            self.number_of_cells_y = nc.dimensions[self.name_of_y_in_netcdf_dimensions].size
         self.shape = (self.number_of_cells_y, self.number_of_cells_x)
-
 
     def _set_area_id(self):
         self.area_id = 'id for '+self.__class__.__name__+' object'
 
     def _define_area(self):
-        self.area = AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)
-
-    def _delete_unecessary_properties(self):
-        """after creation of area of object, unecessary properties that are being used for creating
-        the area are deleted here."""
-        del self.proj
-        del self.x_ll
-        del self.y_ll
-        del self.x_ur
-        del self.y_ur
-        del self.number_of_cells_x
-        del self.number_of_cells_y
-        del self.scene_length_x
-        del self.scene_length_y
-        del self.cell_size_x
-        del self.cell_size_y
-        del self.x_corner_ll
-        del self.x_corner_ur
-        del self.y_corner_ll
-        del self.y_corner_ur
-        del self.area_extent
-        del self.shape
-        del self.area_id
+        return AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)

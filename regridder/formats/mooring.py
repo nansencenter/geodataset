@@ -1,18 +1,25 @@
-from .geodataset import NoneStandardGeoDataset
+from .geodataset import CustomAreaDefinitionBase, GeoDataset
 
 
-class Mooring(NoneStandardGeoDataset):
+class Moorings(GeoDataset):
+    def _load_area(self):
+        MooringAreaDefinitionObject = MooringAreaDefinition(self.file_path)
+        self.area = MooringAreaDefinitionObject._define_area()
+        del MooringAreaDefinitionObject
+
+
+class MooringAreaDefinition(CustomAreaDefinitionBase):
     def __init__(self, file_path):
-        self.name_of_longitude_in_netcdf = 'longitude'
-        self.name_of_latitude_in_netcdf = 'latitude'
+        self.lon_name = 'longitude'
+        self.lat_name = 'latitude'
         self.name_of_x_in_netcdf_dimensions = "x"
         self.name_of_y_in_netcdf_dimensions = "y"
         #x[-1, 0] is the lower left corner of x
-        self.first_index_of_lower_left_corner = -1
-        self.second_index_of_lower_left_corner = 0
+        self.ll_row = -1
+        self.ll_col = 0
         #x[0, -1] is the upper right corner of x
-        self.first_index_of_upper_right_corner = 0
-        self.second_index_of_upper_right_corner = -1
+        self.ur_row = 0
+        self.ur_col = -1
         super().__init__(file_path)
 
 
