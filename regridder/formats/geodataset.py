@@ -7,7 +7,7 @@ from pyresample.geometry import AreaDefinition
 from pyresample.utils import load_cf_area
 from time_helpers import get_time_converter, get_time_name
 from variable_helpers import exchange_names, var_object
-
+from exceptions.area import BadAreaDefinition
 
 class GeoDataset():
     def __init__(self, file_path):
@@ -16,7 +16,10 @@ class GeoDataset():
 
     def _load_area(self):
         """self.area is set in this method, either by use of pyresample functionality (load_cf_area)"""
-        self.area, _ = load_cf_area(self.file_path)
+        try:
+            self.area, _ = load_cf_area(self.file_path)
+        except ValueError:
+            raise BadAreaDefinition
 
     def get_var(self, vblname, time_index=None,
             depth_index=0, ij_range=None, **kwargs):
@@ -166,8 +169,12 @@ class GeoDataset():
         return dto, time_index
 
 
-class CustomAreaDefinitionBase(GeoDataset):
+class CustomAreaDefinitionBase():
     """class for costimzed manner of reading 'area_defintion'"""
+
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self._load_area()
 
     def _load_area(self):
         self._find_proj4_string()

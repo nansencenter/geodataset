@@ -1,9 +1,15 @@
 from .geodataset import CustomAreaDefinitionBase, GeoDataset
-
+from exceptions.area import BadAreaDefinition
+from os.path import basename
 
 class Moorings(GeoDataset):
     def _load_area(self):
-        MooringAreaDefinitionObject = MooringAreaDefinition(self.file_path)
+        if not basename(self.file_path).startswith("Moorings"):
+            raise BadAreaDefinition
+        try:
+            MooringAreaDefinitionObject = MooringAreaDefinition(self.file_path)
+        except IndexError:
+            raise BadAreaDefinition
         self.area = MooringAreaDefinitionObject._define_area()
         del MooringAreaDefinitionObject
 
