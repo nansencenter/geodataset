@@ -7,7 +7,7 @@ from pyresample.geometry import AreaDefinition
 from pyresample.utils import load_cf_area
 from time_helpers import get_time_converter, get_time_name
 from variable_helpers import exchange_names, var_object
-from exceptions.area import BadAreaDefinition
+from exceptions import BadAreaDefinition
 
 class GeoDataset():
     def __init__(self, file_path):
@@ -174,23 +174,16 @@ class CustomAreaDefinitionBase():
 
     def __init__(self, file_path):
         self.file_path = file_path
-        self._load_area()
+        self.proj = pyproj.Proj(self.proj4_string)
+        self._create_area()
 
-    def _load_area(self):
-        self._find_proj4_string()
-        self._instantiate_pyproj_based_on_proj4_string()
-        self._find_x_and_y_for_corners()
-        self._calculate_number_of_cells_and_shape()
-        self._calculate_corner_and_extent()
+    def _create_area(self):
+        self._set_corner_coordinates()
+        self._set_shape()
+        self._set_extent()
         self._set_area_id()
 
-    def _find_proj4_string(self):
-        self.proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
-
-    def _instantiate_pyproj_based_on_proj4_string(self):
-        self.proj = pyproj.Proj(self.proj4_string)
-
-    def _find_x_and_y_for_corners(self):
+    def _set_corner_coordinates(self):
         """x and y for upper right pixel is obtained by converting the corresponding corner lat and lon
         into x and y format"""
         with Dataset(self.file_path) as nc:
@@ -205,7 +198,7 @@ class CustomAreaDefinitionBase():
         self.y_ur = y[1,1]
         self.y_ll = y[0,0]
 
-    def _calculate_number_of_cells_and_shape(self):
+    def _set_shape(self):
         """calculate number of cells and shape"""
         with Dataset(self.file_path) as nc:
             self.number_of_cells_x = nc.dimensions[self.name_of_x_in_netcdf_dimensions].size
@@ -215,5 +208,5 @@ class CustomAreaDefinitionBase():
     def _set_area_id(self):
         self.area_id = 'id for '+self.__class__.__name__+' object'
 
-    def _define_area(self):
+    def get_area(self):
         return AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)
