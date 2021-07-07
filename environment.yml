@@ -1,0 +1,13 @@
+name: regridder
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - scipy
+  - matplotlib
+  - notebook
+  - pyproj
+  - cython
+  - shapely
+  - cartopy
+  - satpy
