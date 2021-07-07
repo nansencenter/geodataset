@@ -1,23 +1,6 @@
 from datetime import datetime
-import netcdftime as NCT
-def get_time_name(nc):
-    """
-    NEMO outputs call time "time_counter"
-    CS2-SMOS thickness files use 'tc' for time dimension, but
-    'time_bnds' for time variable
-    """
-    time_name = None
-    for tname in [
-            'time',
-            'time0', #cfsr
-            'time_counter',
-            'time_bnds',
-            ]:
-        if tname in nc.dimensions:
-            time_name = tname
-            break
 
-    return time_name
+import netcdftime as NCT
 
 
 def get_time_converter(time):
@@ -71,3 +54,30 @@ def get_time_converter(time):
         time_converter = NCT.utime(init_string)
 
     return time_converter
+
+
+def get_time_name(nc):
+    """
+    NEMO outputs call time "time_counter"
+    CS2-SMOS thickness files use 'tc' for time dimension, but
+    'time_bnds' for time variable
+    """
+    time_name = None
+    for tname in [
+            'time',
+            'time0', #cfsr
+            'time_counter',
+            'time_bnds',
+            ]:
+        if tname in nc.dimensions:
+            time_name = tname
+            break
+
+    return time_name
+
+class BadAreaDefinition(Exception):
+    """Exception raised for errors in the definition of area
+    """
+
+    def __str__(self):
+        return "Area can not be defined"

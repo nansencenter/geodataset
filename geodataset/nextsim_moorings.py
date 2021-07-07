@@ -1,8 +1,7 @@
 from os.path import basename
 
-from exceptions import BadAreaDefinition
-
-from .geodataset import CustomAreaDefinitionBase, GeoDataset
+from geodataset import CustomAreaDefinitionBase, GeoDataset
+from utils import BadAreaDefinition
 
 
 class Moorings(GeoDataset):

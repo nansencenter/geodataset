@@ -5,9 +5,10 @@ import pyproj
 from netCDF4 import Dataset
 from pyresample.geometry import AreaDefinition
 from pyresample.utils import load_cf_area
-from time_helpers import get_time_converter, get_time_name
-from variable_helpers import exchange_names, var_object
-from exceptions import BadAreaDefinition
+
+from utils import BadAreaDefinition, get_time_converter, get_time_name
+from variable import exchange_names, var_object
+
 
 class GeoDataset():
     def __init__(self, file_path):
