@@ -4,8 +4,8 @@ from os.path import join
 import numpy as np
 from pyresample import bilinear
 
-from area_definition import open_netcdf
-from interpolation import GridGridInterpolator
+from geodataset.tools import open_netcdf
+from geodataset.interpolation import GridGridInterpolator
 
 
 def main():
