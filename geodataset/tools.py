@@ -1,6 +1,6 @@
-from exceptions import BadAreaDefinition
-from .geodataset import GeoDataset
-from .mooring import Moorings
+from geodataset.utils import BadAreaDefinition
+from geodataset.geodataset import GeoDataset
+from geodataset.nextsim_moorings import Moorings
 
 def open_netcdf(file_address):
     classes = [GeoDataset, Moorings]

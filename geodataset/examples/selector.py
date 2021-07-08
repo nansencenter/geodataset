@@ -4,14 +4,14 @@ from os.path import join
 import numpy as np
 from pyresample import bilinear
 
-from formats.opening import open_netcdf
-from interpolators.gridgrid import GridGridInterpolator
+from geodataset.tools import open_netcdf
+from geodataset.interpolation import GridGridInterpolator
 
 
 def main():
-    search_folder = "/workspaces/Regridder/regridder/data"
+    search_folder = "/workspaces/Regridder/data"
     search_path = join(search_folder, "**/*.nc")
-    target_file_address = '/workspaces/Regridder/regridder/data/ice_conc_nh_polstere-100_multi_202106131200.nc'
+    target_file_address = '/workspaces/Regridder/data/ice_conc_nh_polstere-100_multi_202106131200.nc'
     target = open_netcdf(target_file_address)
     list_of_netcdf_files = glob(search_path, recursive=True)
     list_of_netcdf_files.remove(target_file_address)

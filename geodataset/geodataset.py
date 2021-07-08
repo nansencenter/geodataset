@@ -1,13 +1,12 @@
 from datetime import datetime
 
 import numpy as np
-import pyproj
 from netCDF4 import Dataset
-from pyresample.geometry import AreaDefinition
 from pyresample.utils import load_cf_area
-from time_helpers import get_time_converter, get_time_name
-from variable_helpers import exchange_names, var_object
-from exceptions import BadAreaDefinition
+
+from utils import BadAreaDefinition, get_time_converter, get_time_name
+from variable import exchange_names, var_object
+
 
 class GeoDataset():
     def __init__(self, file_path):
@@ -15,7 +14,7 @@ class GeoDataset():
         self._load_area()
 
     def _load_area(self):
-        """self.area is set in this method, either by use of pyresample functionality (load_cf_area)"""
+        """self.area is set in this method, by use of pyresample functionality (load_cf_area)"""
         try:
             self.area, _ = load_cf_area(self.file_path)
         except ValueError:
@@ -167,46 +166,3 @@ class GeoDataset():
         dto        = min(self.datetimes, key=lambda x: abs(x - pivot))
         time_index = self.datetimes.index(dto)
         return dto, time_index
-
-
-class CustomAreaDefinitionBase():
-    """class for costimzed manner of reading 'area_defintion'"""
-
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.proj = pyproj.Proj(self.proj4_string)
-        self._create_area()
-
-    def _create_area(self):
-        self._set_corner_coordinates()
-        self._set_shape()
-        self._set_extent()
-        self._set_area_id()
-
-    def _set_corner_coordinates(self):
-        """x and y for upper right pixel is obtained by converting the corresponding corner lat and lon
-        into x and y format"""
-        with Dataset(self.file_path) as nc:
-            x, y = self.proj(
-                        nc[self.lon_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]],
-                        nc[self.lat_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]]
-                            )
-        #since we passed (in above line) the "ll" the first and then "ur" as the second, the "ur"
-        # is always at [1,1] matrix and "ll" is always at [0,0]
-        self.x_ur = x[1,1]
-        self.x_ll = x[0,0]
-        self.y_ur = y[1,1]
-        self.y_ll = y[0,0]
-
-    def _set_shape(self):
-        """calculate number of cells and shape"""
-        with Dataset(self.file_path) as nc:
-            self.number_of_cells_x = nc.dimensions[self.name_of_x_in_netcdf_dimensions].size
-            self.number_of_cells_y = nc.dimensions[self.name_of_y_in_netcdf_dimensions].size
-        self.shape = (self.number_of_cells_y, self.number_of_cells_x)
-
-    def _set_area_id(self):
-        self.area_id = 'id for '+self.__class__.__name__+' object'
-
-    def get_area(self):
-        return AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)

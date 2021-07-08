@@ -4,7 +4,7 @@ services:
   jupyter:
     build: '.'
     volumes:
-      - './regridder:/opt/notebooks'
+      - './geodataset:/opt/notebooks'
     working_dir: '/opt/notebooks'
     ports:
       - '8888:8888'
