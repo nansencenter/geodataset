@@ -1,7 +1,7 @@
 from os.path import basename
 
 from geodataset.area_definitions import MooringsAreaDefinition
-from geodataset.geodataset import  GeoDataset
+from geodataset.geo_dataset import  GeoDataset
 from geodataset.utils import BadAreaDefinition
 
 
