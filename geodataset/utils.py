@@ -76,8 +76,8 @@ def get_time_name(nc):
     return time_name
 
 class BadAreaDefinition(Exception):
-    """Exception raised for errors in the definition of area
+    """Exception raised for errors in the definition of area. This is a custom exception for
+    development purposes. should not deal with the user. In the loop of finding a proper class for
+    a netcdf file, this error cause the loop to go the next candidate class for instatiation.
     """
-
-    def __str__(self):
-        return "Area can not be defined"
+    pass

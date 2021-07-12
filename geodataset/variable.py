@@ -1,5 +1,7 @@
+import numpy as np
+
 #from previous code
-def exchange_names(vname,variables):
+def exchange_names(vname, variables):
 
     if vname in variables:
         return vname
@@ -31,7 +33,7 @@ def exchange_names(vname,variables):
                     return vbl
 
     raise ValueError(vname+' not in variable list')
-    return
+
 
 
 #from previous code
@@ -50,7 +52,7 @@ class var_object:
         if extra_atts is not None:
             attlist,attvals = extra_atts
             for i,att in enumerate(attlist):
-                setattr(self,att,attvals[i])
+                setattr(self, att, attvals[i])
 
         self.shape  = vals.shape
         self.ndim    = vals.ndim
@@ -65,7 +67,7 @@ class var_object:
                 # if additional mask is passed in,
                 # take union of masks
                 mask = np.logical_or(vals.mask,mask_in)
-                self.values = np.ma.array(vals.data,mask=mask)
+                self.values = np.ma.array(vals.data, mask=mask)
         else:
             # convert to masked array
             # - check for NaNs
@@ -74,14 +76,13 @@ class var_object:
             if mask_in is not None:
                 # if additional mask is passed in,
                 # take union of masks
-                mask = np.logical_or(mask,mask_in)
+                mask = np.logical_or(mask, mask_in)
 
             self.values = np.ma.array(vals,mask=mask)
 
-        # activate self[:,:]
-        self.__getitem__  = self.values.__getitem__
-        return
-
+    # activate self[:,:]
+    def __getitem__(self, indexes):
+        return self.values.__getitem__(indexes)
 
     def min(self):
         return self.values.min()

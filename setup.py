@@ -7,8 +7,8 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="geodataset",
     version="0.0.1",
-    author="Arash Azamifard",
-    author_email="arash.azamifard@nersc.no",
+    author="Anton Korosov",
+    author_email="Anton.Korosov@nersc.no",
     description="regridding tool for Geospatial data",
     long_description=long_description,
     long_description_content_type="text/markdown",
