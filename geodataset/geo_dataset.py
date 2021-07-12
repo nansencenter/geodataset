@@ -4,14 +4,15 @@ import numpy as np
 from netCDF4 import Dataset
 from pyresample.utils import load_cf_area
 
-from utils import BadAreaDefinition, get_time_converter, get_time_name
-from variable import exchange_names, var_object
+from geodataset.utils import BadAreaDefinition, get_time_converter, get_time_name
+from geodataset.variable import exchange_names, var_object
 
 
 class GeoDataset():
     def __init__(self, file_path):
         self.file_path = file_path
         self._load_area()
+        self._set_time_info()
 
     def _load_area(self):
         """self.area is set in this method, by use of pyresample functionality (load_cf_area)"""
