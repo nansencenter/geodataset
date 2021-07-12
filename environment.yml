@@ -6,9 +6,7 @@ dependencies:
   - scipy
   - matplotlib
   - notebook
-  - pyproj
-  - cython
-  - shapely
   - netcdftime
   - cartopy
   - satpy
+  - coverage
