@@ -1,3 +1,5 @@
+import os
+from os.path import join
 from unittest import TestCase, mock
 
 from area_definitions import CustomAreaDefinitionBase, MooringsAreaDefinition
@@ -34,7 +36,7 @@ class ValueBasedAreaDefinitionTestCases(TestCase):
     """if the generic computational methods can calculated the number for one example, they can do
     the same for every type of file. Here in this case mooring file is selected as an example file"""
     def setUp(self):
-        self.testing_areadefinition = MooringsAreaDefinition("geodataset/tests/data/Moorings_2021d179.nc")
+        self.testing_areadefinition = MooringsAreaDefinition(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
 
     def tearDown(self):
         del self.testing_areadefinition
@@ -61,7 +63,7 @@ class ValueBasedAreaDefinitionTestCases(TestCase):
 class ValueBasedMooringsAreaDefinitionTestCases(TestCase):
     def test_method_area_extent(self):
         """Test that the corners and the area extent of AreaDefinition is set correctly"""
-        self.testing_areadefinition = MooringsAreaDefinition("geodataset/tests/data/Moorings_2021d179.nc")
+        self.testing_areadefinition = MooringsAreaDefinition(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
         self.testing_areadefinition._set_corner_coordinates()
         self.testing_areadefinition._set_extent()
         self.assertEqual(self.testing_areadefinition.width, 6912892.835698167)

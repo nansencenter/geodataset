@@ -1,3 +1,5 @@
+import os
+from os.path import join
 from unittest import TestCase, mock
 
 import netcdftime
@@ -10,7 +12,7 @@ class UtilsTestCases(TestCase):
     def test_get_time_name(self):
         """ Test that the name of variable that contains time inside the netcdf file is correctly
         found by the method."""
-        with Dataset("data/ice_conc_nh_polstere-100_multi_200611151200.nc") as nc:
+        with Dataset(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc")) as nc:
             answer = get_time_name(nc)
             self.assertEqual(answer, 'time')
 

@@ -1,3 +1,5 @@
+import os
+from os.path import join
 from unittest import TestCase
 
 import numpy as np
@@ -10,7 +12,7 @@ class VariableTestCases(TestCase):
         """
         test that the names are correctly exchanged into the proper name inside the netcdf file
         """
-        with Dataset("data/ice_conc_nh_polstere-100_multi_200611151200.nc") as nc:
+        with Dataset(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc")) as nc:
             answer1 = exchange_names('sea_ice_concentration', nc.variables)
             answer2 = exchange_names('sic', nc.variables)
             answer3 = exchange_names('concentration', nc.variables)

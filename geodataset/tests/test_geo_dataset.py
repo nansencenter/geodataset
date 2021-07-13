@@ -1,4 +1,6 @@
+import os
 from datetime import datetime
+from os.path import join
 from unittest import TestCase, mock
 
 import numpy as np
@@ -9,7 +11,7 @@ from geodataset.utils import BadAreaDefinition
 class GeodatasetTestCases(TestCase):
 
     def setUp(self):
-        self.test_geodataset = GeoDataset("geodataset/tests/data/ice_conc_nh_polstere-100_multi_200611151200.nc")
+        self.test_geodataset = GeoDataset(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc"))
 
     @mock.patch.object(GeoDataset, "_set_time_info")
     @mock.patch("geo_dataset.load_cf_area", return_value=["return_value_for_load_cf_area", ''])
