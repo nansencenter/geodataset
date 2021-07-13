@@ -1,4 +1,3 @@
-
 # The build-stage image:
 FROM continuumio/miniconda3 AS build
 
@@ -27,8 +26,9 @@ FROM debian:buster AS runtime
 
 # Copy /venv from the previous stage:
 COPY --from=build /venv /venv
-
+ENV TEST_DATA_DIR=/test_data_dir
 RUN mkdir /opt/notebooks
+COPY geodataset geodataset
 # When image is run, run the code with the environment
 # activated:
 SHELL ["/bin/bash", "-c"]
