@@ -13,8 +13,6 @@ from tests.test_utils import UtilsTestCases
 from tests.test_variable import VariableTestCases
 
 if __name__ == '__main__':
-    if 'TEST_DATA_DIR' in os.environ and os.environ['TEST_DATA_DIR']!='':
-        pass
-    else:
+    if 'TEST_DATA_DIR' not in os.environ or os.environ['TEST_DATA_DIR'] =='':
         raise ValueError('TEST_DATA_DIR is not defined or wrongly defined. It should point to example_data.')
     unittest.main(failfast=True)
