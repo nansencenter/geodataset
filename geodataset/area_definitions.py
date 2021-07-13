@@ -28,10 +28,10 @@ class CustomAreaDefinitionBase():
                             )
         #since we passed (in above line) the "ll" the first and then "ur" as the second, the "ur"
         # is always at [1,1] matrix and "ll" is always at [0,0]
-        self.x_ur = x[1,1]
-        self.x_ll = x[0,0]
-        self.y_ur = y[1,1]
-        self.y_ll = y[0,0]
+        self.x_ur = x[1, 1]
+        self.x_ll = x[0, 0]
+        self.y_ur = y[1, 1]
+        self.y_ll = y[0, 0]
 
     def _set_shape(self):
         """calculate number of cells and shape"""
