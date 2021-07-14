@@ -52,7 +52,7 @@ class GeodatasetTestCases(TestCase):
         self.assertEqual(self.test_geodataset.datetimes, [datetime(2006, 11, 15, 12, 0)])
 
     def test_method_nearestDate(self):
-        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006(in
+        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
         netcdf file) than the 2010."""
         self.test_geodataset.datetimes.append(datetime(2010, 11, 15, 12, 0))
         ans, ans_index = self.test_geodataset.nearestDate(datetime(2007, 11, 15, 12, 0))
