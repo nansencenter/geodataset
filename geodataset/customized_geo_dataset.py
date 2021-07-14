@@ -12,10 +12,14 @@ from geodataset.utils import BadAreaDefinition
 class CustomizedGeoDataset(GeoDataset):
 
     def _load_area(self):
+        """for CustomizedGeoDataset area is obtained with the help of 'CustomizedAreaDefinition' of
+        the class."""
         tmp_area_definition = self.CustomizedAreaDefinition(self.file_path)
         self.area = tmp_area_definition.get_area()
 
     def _check_valid_class(self):
+        """check the validity of the class with testing the starting part of filename or with filename
+        containing a specific string within."""
         if self.part_of_filename and self.part_of_filename not in basename(self.file_path):
             raise BadAreaDefinition
         if self.start_of_filename and not basename(self.file_path).startswith(self.start_of_filename):
