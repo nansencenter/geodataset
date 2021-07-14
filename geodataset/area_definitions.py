@@ -115,12 +115,12 @@ class AMSR2IceConcAreaDefinition(CustomAreaDefinitionBase):
     proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
 
 
-class ASRFINALAreaDefinition(CustomAreaDefinitionBase):
-    lon_name = 'XLONG'
-    lat_name = 'XLAT'
-    name_of_x_in_netcdf_dimensions = "x"
-    name_of_y_in_netcdf_dimensions = "y"
-    proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
+#class ASRFINALAreaDefinition(CustomAreaDefinitionBase):
+#    lon_name = 'XLONG'
+#    lat_name = 'XLAT'
+#    name_of_x_in_netcdf_dimensions = "x"
+#    name_of_y_in_netcdf_dimensions = "y"
+#    proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
 
 
 class METNOARCsvalbardAreaDefinition(CustomAreaDefinitionBase):
