@@ -1,10 +1,7 @@
 from geodataset.utils import BadAreaDefinition
 from geodataset.geo_dataset import GeoDataset
-from geodataset.nextsim_moorings import Moorings
-from geodataset.topaz4_arc import Topaz4Arc
-from geodataset.amsr2_ice_conc import AMSR2IceConc
-from geodataset.asrfinal import ASRFINAL
-from geodataset.metno_arc_l4 import METNOARCsvalbard
+from geodataset.customized_geo_dataset import (Moorings, Topaz4Arc, AMSR2IceConc, ASRFINAL,
+                                               METNOARCsvalbard)
 
 def open_netcdf(file_address):
     classes = [GeoDataset, Moorings, Topaz4Arc, AMSR2IceConc, ASRFINAL, METNOARCsvalbard]

@@ -13,8 +13,15 @@ from geodataset.variable import exchange_names, var_object
 class GeoDataset():
     def __init__(self, file_path):
         self.file_path = file_path
+        self._check_valid_class()
         self._load_area()
         self._set_time_info()
+
+    def _check_valid_class(self):
+        """Not useful for this class. Since we first rely on pyresample to read the files. This method
+        allows all type of file to be tested by pyresample 'load_cf_area' method.
+        This method is used for other classes to raise badareadefinition."""
+        pass
 
     def _load_area(self):
         """self.area is set in this method, by use of pyresample functionality (load_cf_area)"""

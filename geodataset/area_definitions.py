@@ -5,18 +5,6 @@ from pyresample.geometry import AreaDefinition, SwathDefinition
 
 class CustomAreaDefinitionBase():
     """class for costimzed manner of reading 'area_defintion'"""
-    #x[-1, 0] is the lower left corner of x
-    ll_row = -1
-    ll_col = 0
-    #x[0, -1] is the upper right corner of x
-    ur_row = 0
-    ur_col = -1
-    #x[0, 0] is the upper left corner of x
-    ul_row = 0
-    ul_col = 0
-    #x[-1, -1] is the lower right corner of x
-    lr_row = -1
-    lr_col = -1
 
     def __init__(self, file_path):
         self.file_path = file_path
@@ -33,19 +21,18 @@ class CustomAreaDefinitionBase():
         """x and y for corner pixel is obtained by converting the corresponding corner lat and lon
         into x and y format"""
         with Dataset(self.file_path) as nc:
+            corner_rows_cols = [-1, 0, -1, 0], [0, -1, -1, 0]
             x, y = self.proj(
-                        nc[self.lon_name][
-                                            [self.ll_row, self.ur_row, self.lr_row, self.ul_row],
-                                            [self.ll_col, self.ur_col, self.lr_col, self.ul_col]
-                                         ],
-                        nc[self.lat_name][
-                                            [self.ll_row, self.ur_row, self.lr_row, self.ul_row],
-                                            [self.ll_col, self.ur_col, self.lr_col, self.ul_col]
-                                         ]
-                            )
-        #since we passed (in above line) the "ll" the first and then "ur" as the second, the "ur"
-        # is always at [1,1] in the matrix and "ll" is always at [0,0] in the matrix.
-        ##since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
+                        nc[self.lon_name][corner_rows_cols],
+                        nc[self.lat_name][corner_rows_cols],
+                       )
+        #x[-1, 0] is the lower left corner of x       <= ll
+        #x[0, -1] is the upper right corner of x      <= ur
+        #x[-1, -1] is the lower right corner of x     <= lr
+        #x[0, 0] is the upper left corner of x        <= ul
+        #since we passed (in above line, corner_rows_cols) the "ll" the first and then "ur" as the
+        # second, the "ur" is always at [1,1] in the matrix and "ll" is always at [0,0] in the matrix.
+        #Since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
         ## is always at [3,3] in the matrix and "lr" is always at [2,2] in the matrix
         self.x_ll = x[0, 0]
         self.y_ll = y[0, 0]
@@ -60,11 +47,11 @@ class CustomAreaDefinitionBase():
         """calculate number of cells and shape. If x and y are present in the netcdf file, then the
         size of them is used for shape. Otherwise, the size of lon and lat is used for the shape"""
         with Dataset(self.file_path) as nc:
-            self.number_of_points_in_dimension_x = nc.dimensions[self.name_of_x_in_netcdf_dimensions].size
-            self.number_of_points_in_dimension_y = nc.dimensions[self.name_of_y_in_netcdf_dimensions].size
+            self.raster_width = nc.dimensions[self.x_dimension_name].size
+            self.raster_height = nc.dimensions[self.y_dimension_name].size
 
 
-        self.shape = (self.number_of_points_in_dimension_y, self.number_of_points_in_dimension_x)
+        self.shape = (self.raster_height, self.raster_width)
 
     def _set_area_id(self):
         self.area_id = 'id for '+self.__class__.__name__+' object'
@@ -80,8 +67,8 @@ class CustomAreaDefinitionBase():
         upper-right (ur) pixel of data. Pyresample always need ll and ur for extent calculation."""
         self.width = self.x_lr - self.x_ul
         self.height = self.y_lr - self.y_ul
-        self.cell_size_x = self.width / (self.number_of_points_in_dimension_x - 1)
-        self.cell_size_y = self.height / (self.number_of_points_in_dimension_y - 1)
+        self.cell_size_x = self.width / (self.raster_width - 1)
+        self.cell_size_y = self.height / (self.raster_height - 1)
 
         self.x_corner_ll = self.x_ll - self.cell_size_x/2
         self.x_corner_ur = self.x_ur + self.cell_size_x/2
@@ -93,8 +80,8 @@ class CustomAreaDefinitionBase():
 class MooringsAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'longitude'
     lat_name = 'latitude'
-    name_of_x_in_netcdf_dimensions = "x"
-    name_of_y_in_netcdf_dimensions = "y"
+    x_dimension_name = "x"
+    y_dimension_name = "y"
     proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
 
 
@@ -102,24 +89,24 @@ class MooringsAreaDefinition(CustomAreaDefinitionBase):
 class Topaz4ArcAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'longitude'
     lat_name = 'latitude'
-    name_of_x_in_netcdf_dimensions = "x"
-    name_of_y_in_netcdf_dimensions = "y"
+    x_dimension_name = "x"
+    y_dimension_name = "y"
     proj4_string = '+proj=stere +a=6378273.0  ecc=0. +lat_0=90 +lat_ts=90 +lon_0=-45'
 
 
 class AMSR2IceConcAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'longitude'
     lat_name = 'latitude'
-    name_of_x_in_netcdf_dimensions = "x"
-    name_of_y_in_netcdf_dimensions = "y"
+    x_dimension_name = "x"
+    y_dimension_name = "y"
     proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
 
 
 class METNOARCsvalbardAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'lon'
     lat_name = 'lat'
-    name_of_x_in_netcdf_dimensions = "xc"
-    name_of_y_in_netcdf_dimensions = "yc"
+    x_dimension_name = "xc"
+    y_dimension_name = "yc"
     proj4_string = '+proj=stere +a=6371000.0  ecc=0.0 +lat_0=90 +lat_ts=90 +lon_0=0'
 
 
