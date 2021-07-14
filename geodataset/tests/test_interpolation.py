@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from geodataset.geo_dataset import GeoDataset
 from geodataset.interpolation import GridGridInterpolator
-from geodataset.nextsim_moorings import Moorings
+from geodataset.customized_geo_dataset import Moorings
 from pyresample.bilinear import NumpyBilinearResampler
 
 

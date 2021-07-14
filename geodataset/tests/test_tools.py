@@ -3,7 +3,7 @@ from os.path import join
 from unittest import TestCase
 
 from geodataset.geo_dataset import GeoDataset
-from geodataset.nextsim_moorings import Moorings
+from geodataset.customized_geo_dataset import Moorings
 from geodataset.tools import open_netcdf
 
 
