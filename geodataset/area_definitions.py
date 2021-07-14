@@ -1,6 +1,6 @@
 import pyproj
 from netCDF4 import Dataset
-from pyresample.geometry import AreaDefinition
+from pyresample.geometry import AreaDefinition, SwathDefinition
 
 
 class CustomAreaDefinitionBase():
@@ -115,17 +115,22 @@ class AMSR2IceConcAreaDefinition(CustomAreaDefinitionBase):
     proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
 
 
-#class ASRFINALAreaDefinition(CustomAreaDefinitionBase):
-#    lon_name = 'XLONG'
-#    lat_name = 'XLAT'
-#    name_of_x_in_netcdf_dimensions = "x"
-#    name_of_y_in_netcdf_dimensions = "y"
-#    proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
-
-
 class METNOARCsvalbardAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'lon'
     lat_name = 'lat'
     name_of_x_in_netcdf_dimensions = "xc"
     name_of_y_in_netcdf_dimensions = "yc"
     proj4_string = '+proj=stere +a=6371000.0  ecc=0.0 +lat_0=90 +lat_ts=90 +lon_0=0'
+
+
+class CustomSwathDefinitionBase():
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def get_area(self):
+        with Dataset(self.file_path) as nc:
+            return SwathDefinition(lons=nc[self.lon_name], lats=nc[self.lat_name])
+
+class ASRFINALAreaDefinition(CustomSwathDefinitionBase):
+    lon_name = 'XLONG'
+    lat_name = 'XLAT'
