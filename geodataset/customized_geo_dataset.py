@@ -2,6 +2,8 @@ from os.path import basename
 
 from geodataset.area_definitions import (AMSR2IceConcAreaDefinition,
                                          ASRFINALAreaDefinition,
+                                         Dist2CoastAreaDefinition,
+                                         ETOPOArcticAreaDefinition,
                                          METNOARCsvalbardAreaDefinition,
                                          MooringsAreaDefinition,
                                          Topaz4ArcAreaDefinition)
@@ -63,7 +65,13 @@ class Topaz4Arc(CustomizedGeoDataset):
 
 
 
-class Bathymetry(CustomizedGeoDataset):#incomplete
-    CustomizedAreaDefinition =0 #ASRFINALAreaDefinition
-    part_of_filename = 0#"topaz4-ARC"
-    start_of_filename = 0#None
+class ETOPOArctic(CustomizedGeoDataset):
+    CustomizedAreaDefinition = ETOPOArcticAreaDefinition
+    part_of_filename = None
+    start_of_filename = "ETOPO_Arctic_2arcmin"
+
+
+class Dist2Coast(CustomizedGeoDataset):
+    CustomizedAreaDefinition = Dist2CoastAreaDefinition
+    part_of_filename = "deg"
+    start_of_filename = "dist2coast_"

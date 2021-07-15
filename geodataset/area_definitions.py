@@ -1,3 +1,4 @@
+import numpy as np
 import pyproj
 from netCDF4 import Dataset
 from pyresample.geometry import AreaDefinition, SwathDefinition
@@ -22,10 +23,19 @@ class CustomAreaDefinitionBase():
         into x and y format"""
         with Dataset(self.file_path) as nc:
             corner_rows_cols = [-1, 0, -1, 0], [0, -1, -1, 0]
+
+            if nc[self.lon_name].ndim ==1 and nc[self.lat_name].ndim==1:
+                lon_array = nc[self.lon_name][:].reshape(-1, 1)
+                lat_array = nc[self.lat_name][:].reshape(1, -1)
+                lon_array = np.broadcast_to(lon_array, (nc[self.lon_name].size, nc[self.lat_name].size))
+                lat_array = np.broadcast_to(lat_array, (nc[self.lon_name].size, nc[self.lat_name].size))
+            else:
+                lon_array = nc[self.lon_name]
+                lat_array = nc[self.lat_name]
             x, y = self.proj(
-                        nc[self.lon_name][corner_rows_cols],
-                        nc[self.lat_name][corner_rows_cols],
-                       )
+                        lon_array[corner_rows_cols],
+                        lat_array[corner_rows_cols],
+                            )
         #x[-1, 0] is the lower left corner of x       <= ll
         #x[0, -1] is the upper right corner of x      <= ur
         #x[-1, -1] is the lower right corner of x     <= lr
@@ -34,14 +44,14 @@ class CustomAreaDefinitionBase():
         # second, the "ur" is always at [1,1] in the matrix and "ll" is always at [0,0] in the matrix.
         #Since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
         ## is always at [3,3] in the matrix and "lr" is always at [2,2] in the matrix
-        self.x_ll = x[0, 0]
-        self.y_ll = y[0, 0]
-        self.x_ur = x[1, 1]
-        self.y_ur = y[1, 1]
-        self.x_lr = x[2, 2]
-        self.y_lr = y[2, 2]
-        self.x_ul = x[3, 3]
-        self.y_ul = y[3, 3]
+        self.x_ll = x[0, 0] if x.ndim>1 else x[0]
+        self.y_ll = y[0, 0] if y.ndim>1 else y[0]
+        self.x_ur = x[1, 1] if x.ndim>1 else x[1]
+        self.y_ur = y[1, 1] if y.ndim>1 else y[1]
+        self.x_lr = x[2, 2] if x.ndim>1 else x[2]
+        self.y_lr = y[2, 2] if y.ndim>1 else y[2]
+        self.x_ul = x[3, 3] if x.ndim>1 else x[3]
+        self.y_ul = y[3, 3] if y.ndim>1 else y[3]
 
     def _set_shape(self):
         """calculate number of cells and shape. If x and y are present in the netcdf file, then the
@@ -85,7 +95,6 @@ class MooringsAreaDefinition(CustomAreaDefinitionBase):
     proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
 
 
-
 class Topaz4ArcAreaDefinition(CustomAreaDefinitionBase):
     lon_name = 'longitude'
     lat_name = 'latitude'
@@ -110,6 +119,14 @@ class METNOARCsvalbardAreaDefinition(CustomAreaDefinitionBase):
     proj4_string = '+proj=stere +a=6371000.0  ecc=0.0 +lat_0=90 +lat_ts=90 +lon_0=0'
 
 
+class Dist2CoastAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'lon'
+    lat_name = 'lat'
+    x_dimension_name = 'lon'
+    y_dimension_name = 'lat'
+    proj4_string = '+proj=longlat'
+
+
 class CustomSwathDefinitionBase():
     def __init__(self, file_path):
         self.file_path = file_path
@@ -118,6 +135,12 @@ class CustomSwathDefinitionBase():
         with Dataset(self.file_path) as nc:
             return SwathDefinition(lons=nc[self.lon_name], lats=nc[self.lat_name])
 
+
 class ASRFINALAreaDefinition(CustomSwathDefinitionBase):
     lon_name = 'XLONG'
     lat_name = 'XLAT'
+
+
+class ETOPOArcticAreaDefinition(CustomSwathDefinitionBase):
+    lon_name = 'lon'
+    lat_name = 'lat'
