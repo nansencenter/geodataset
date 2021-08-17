@@ -10,7 +10,8 @@ from pyresample.bilinear import NumpyBilinearResampler
 
 
 class ResamplingTestCases(TestCase):
-    def test_resampling_between_two_files(self):
+
+    def test_resampling_calculation_between_two_files(self):
         """Test that the resampling calculation is done and compare the result with
         the previously done which is stored in a pickled file"""
         target = open_netcdf(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc"))

@@ -24,13 +24,6 @@ class CustomAreaDefinitionTestCases(TestCase):
         mock_set_extent.assert_called()
         mock_set_area_id.assert_called()
 
-    @mock.patch("area_definitions.CustomAreaDefinitionBase.__init__", return_value=None)
-    def test_method_set_extent(self, mock_init):
-        """test that the base class does not implement the method of '_set_extent'"""
-        custom_areadefinition = CustomAreaDefinitionBase("")
-        with self.assertRaises(NotImplementedError):
-            custom_areadefinition._set_extent()
-
 
 class ValueBasedAreaDefinitionTestCases(TestCase):
     """if the generic computational methods can calculated the number for one example, they can do
@@ -66,15 +59,15 @@ class ValueBasedMooringsAreaDefinitionTestCases(TestCase):
         self.testing_areadefinition = MooringsAreaDefinition(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
         self.testing_areadefinition._set_corner_coordinates()
         self.testing_areadefinition._set_extent()
-        self.assertEqual(self.testing_areadefinition.width, 6912892.835698167)
-        self.assertEqual(self.testing_areadefinition.height, 6632112.419085264)
-        self.assertEqual(self.testing_areadefinition.cell_size_x, 2803.2817663009596)
-        self.assertEqual(self.testing_areadefinition.cell_size_y, 2803.090625141701)
-        self.assertEqual(self.testing_areadefinition.x_corner_ll, -3366614.712704983)
-        self.assertEqual(self.testing_areadefinition.x_corner_ur, 3549081.4047594853)
-        self.assertEqual(self.testing_areadefinition.y_corner_ll, 2614117.1342526213)
-        self.assertEqual(self.testing_areadefinition.y_corner_ur, -4015192.1942075016)
+        self.assertEqual(self.testing_areadefinition.width, 6912978.442985907)
+        self.assertEqual(self.testing_areadefinition.height, 6632203.801141923)
+        self.assertEqual(self.testing_areadefinition.cell_size_x, 2803.316481340595)
+        self.assertEqual(self.testing_areadefinition.cell_size_y, 2803.1292481580404)
+        self.assertEqual(self.testing_areadefinition.x_corner_ll, -3366614.730062503)
+        self.assertEqual(self.testing_areadefinition.x_corner_ur, 3549081.422117005)
+        self.assertEqual(self.testing_areadefinition.y_corner_ll, 2614117.114941113)
+        self.assertEqual(self.testing_areadefinition.y_corner_ur, -4015192.1748959934)
         self.assertEqual(self.testing_areadefinition.area_extent,
-                   (-3366614.712704983, 2614117.1342526213, 3549081.4047594853, -4015192.1942075016)
+                   (-3366614.730062503, 2614117.114941113, 3549081.422117005, -4015192.1748959934)
                         )
         del self.testing_areadefinition

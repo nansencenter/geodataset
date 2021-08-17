@@ -1,7 +1,7 @@
-
+import numpy as np
 import pyproj
 from netCDF4 import Dataset
-from pyresample.geometry import AreaDefinition
+from pyresample.geometry import AreaDefinition, SwathDefinition
 
 
 class CustomAreaDefinitionBase():
@@ -19,26 +19,49 @@ class CustomAreaDefinitionBase():
         self._set_area_id()
 
     def _set_corner_coordinates(self):
-        """x and y for upper right pixel is obtained by converting the corresponding corner lat and lon
+        """x and y for corner pixel is obtained by converting the corresponding corner lat and lon
         into x and y format"""
         with Dataset(self.file_path) as nc:
+            corner_rows_cols = [-1, 0, -1, 0], [0, -1, -1, 0]
+
+            if nc[self.lon_name].ndim ==1 and nc[self.lat_name].ndim==1:
+                lon_array = nc[self.lon_name][:].reshape(-1, 1)
+                lat_array = nc[self.lat_name][:].reshape(1, -1)
+                lon_array = np.broadcast_to(lon_array, (nc[self.lon_name].size, nc[self.lat_name].size))
+                lat_array = np.broadcast_to(lat_array, (nc[self.lon_name].size, nc[self.lat_name].size))
+            else:
+                lon_array = nc[self.lon_name]
+                lat_array = nc[self.lat_name]
             x, y = self.proj(
-                        nc[self.lon_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]],
-                        nc[self.lat_name][[self.ll_row, self.ur_row], [self.ll_col, self.ur_col]]
+                        lon_array[corner_rows_cols],
+                        lat_array[corner_rows_cols],
                             )
-        #since we passed (in above line) the "ll" the first and then "ur" as the second, the "ur"
-        # is always at [1,1] matrix and "ll" is always at [0,0]
-        self.x_ur = x[1, 1]
-        self.x_ll = x[0, 0]
-        self.y_ur = y[1, 1]
-        self.y_ll = y[0, 0]
+        #x[-1, 0] is the lower left corner of x       <= ll
+        #x[0, -1] is the upper right corner of x      <= ur
+        #x[-1, -1] is the lower right corner of x     <= lr
+        #x[0, 0] is the upper left corner of x        <= ul
+        #since we passed (in above line, corner_rows_cols) the "ll" the first and then "ur" as the
+        # second, the "ur" is always at [1,1] in the matrix and "ll" is always at [0,0] in the matrix.
+        #Since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
+        ## is always at [3,3] in the matrix and "lr" is always at [2,2] in the matrix
+        self.x_ll = x[0, 0] if x.ndim>1 else x[0]
+        self.y_ll = y[0, 0] if y.ndim>1 else y[0]
+        self.x_ur = x[1, 1] if x.ndim>1 else x[1]
+        self.y_ur = y[1, 1] if y.ndim>1 else y[1]
+        self.x_lr = x[2, 2] if x.ndim>1 else x[2]
+        self.y_lr = y[2, 2] if y.ndim>1 else y[2]
+        self.x_ul = x[3, 3] if x.ndim>1 else x[3]
+        self.y_ul = y[3, 3] if y.ndim>1 else y[3]
 
     def _set_shape(self):
-        """calculate number of cells and shape"""
+        """calculate number of cells and shape. If x and y are present in the netcdf file, then the
+        size of them is used for shape. Otherwise, the size of lon and lat is used for the shape"""
         with Dataset(self.file_path) as nc:
-            self.number_of_cells_x = nc.dimensions[self.name_of_x_in_netcdf_dimensions].size
-            self.number_of_cells_y = nc.dimensions[self.name_of_y_in_netcdf_dimensions].size
-        self.shape = (self.number_of_cells_y, self.number_of_cells_x)
+            self.raster_width = nc.dimensions[self.x_dimension_name].size
+            self.raster_height = nc.dimensions[self.y_dimension_name].size
+
+
+        self.shape = (self.raster_height, self.raster_width)
 
     def _set_area_id(self):
         self.area_id = 'id for '+self.__class__.__name__+' object'
@@ -47,31 +70,77 @@ class CustomAreaDefinitionBase():
         return AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)
 
     def _set_extent(self):
-        raise NotImplementedError('The _set_extent() method was not implemented')
-
-
-class MooringsAreaDefinition(CustomAreaDefinitionBase):
-    lon_name = 'longitude'
-    lat_name = 'latitude'
-    name_of_x_in_netcdf_dimensions = "x"
-    name_of_y_in_netcdf_dimensions = "y"
-    #x[-1, 0] is the lower left corner of x
-    ll_row = -1
-    ll_col = 0
-    #x[0, -1] is the upper right corner of x
-    ur_row = 0
-    ur_col = -1
-    proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
-
-    def _set_extent(self):
-        """calculate corner and extent"""
-        self.width = self.x_ur - self.x_ll
-        self.height = self.y_ll - self.y_ur
-        self.cell_size_x = self.width / (self.number_of_cells_x - 1)
-        self.cell_size_y = self.height / (self.number_of_cells_y - 1)
+        """width and height are calculated in a way that they preserve the 'sign convention' for all
+        type of netcdf files. Sign of width and height (correspondingly 'cell_size_x' and
+        'cell_size_y') is changing based on the direction of increasing the x and y axis. This sign
+        convention is correct for calculating the corners based on the lower-left (ll) pixel and
+        upper-right (ur) pixel of data. Pyresample always need ll and ur for extent calculation."""
+        self.width = self.x_lr - self.x_ul
+        self.height = self.y_lr - self.y_ul
+        self.cell_size_x = self.width / (self.raster_width - 1)
+        self.cell_size_y = self.height / (self.raster_height - 1)
 
         self.x_corner_ll = self.x_ll - self.cell_size_x/2
         self.x_corner_ur = self.x_ur + self.cell_size_x/2
         self.y_corner_ll = self.y_ll - self.cell_size_y/2
         self.y_corner_ur = self.y_ur + self.cell_size_y/2
         self.area_extent = (self.x_corner_ll, self.y_corner_ll, self.x_corner_ur, self.y_corner_ur)
+
+
+class MooringsAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'longitude'
+    lat_name = 'latitude'
+    x_dimension_name = "x"
+    y_dimension_name = "y"
+    proj4_string = '+proj=stere +a=6378273.0 +b=6356889.448910593 +lat_0=90 +lat_ts=60 +lon_0=-45'
+
+
+class Topaz4ArcAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'longitude'
+    lat_name = 'latitude'
+    x_dimension_name = "x"
+    y_dimension_name = "y"
+    proj4_string = '+proj=stere +a=6378273.0  ecc=0. +lat_0=90 +lat_ts=90 +lon_0=-45'
+
+
+class AMSR2IceConcAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'longitude'
+    lat_name = 'latitude'
+    x_dimension_name = "x"
+    y_dimension_name = "y"
+    proj4_string = '+proj=stere +a=6378273.0  ecc=0.081816153 +lat_0=90 +lat_ts=70 +lon_0=-45'
+
+
+class METNOARCsvalbardAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'lon'
+    lat_name = 'lat'
+    x_dimension_name = "xc"
+    y_dimension_name = "yc"
+    proj4_string = '+proj=stere +a=6371000.0  ecc=0.0 +lat_0=90 +lat_ts=90 +lon_0=0'
+
+
+class Dist2CoastAreaDefinition(CustomAreaDefinitionBase):
+    lon_name = 'lon'
+    lat_name = 'lat'
+    x_dimension_name = 'lon'
+    y_dimension_name = 'lat'
+    proj4_string = '+proj=longlat'
+
+
+class CustomSwathDefinitionBase():
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def get_area(self):
+        with Dataset(self.file_path) as nc:
+            return SwathDefinition(lons=nc[self.lon_name], lats=nc[self.lat_name])
+
+
+class ASRFINALAreaDefinition(CustomSwathDefinitionBase):
+    lon_name = 'XLONG'
+    lat_name = 'XLAT'
+
+
+class ETOPOArcticAreaDefinition(CustomSwathDefinitionBase):
+    lon_name = 'lon'
+    lat_name = 'lat'

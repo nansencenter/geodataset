@@ -2,24 +2,36 @@ from datetime import datetime
 
 import numpy as np
 from netCDF4 import Dataset
+from pyproj.exceptions import CRSError
 from pyresample.utils import load_cf_area
 
-from geodataset.utils import BadAreaDefinition, get_time_converter, get_time_name
+from geodataset.utils import (BadAreaDefinition, get_time_converter,
+                              get_time_name)
 from geodataset.variable import exchange_names, var_object
 
 
 class GeoDataset():
     def __init__(self, file_path):
         self.file_path = file_path
+        self._check_valid_class()
         self._load_area()
         self._set_time_info()
+
+    def _check_valid_class(self):
+        """Not useful for this class. Since we first rely on pyresample to read the files. This method
+        allows all type of file to be tested by pyresample 'load_cf_area' method.
+        This method is used for other classes to raise badareadefinition."""
+        pass
 
     def _load_area(self):
         """self.area is set in this method, by use of pyresample functionality (load_cf_area)"""
         try:
             self.area, _ = load_cf_area(self.file_path)
-        except ValueError:
+        except (ValueError, CRSError, ZeroDivisionError):
             raise BadAreaDefinition
+        except KeyError as err:
+            if err.args[0]=="Variable 'Polar_Stereographic_Grid' does not exist in netCDF file":
+                raise BadAreaDefinition
 
     def get_var(self, vblname, time_index=None,
             depth_index=0, ij_range=None, **kwargs):
