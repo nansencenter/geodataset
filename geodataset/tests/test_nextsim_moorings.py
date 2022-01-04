@@ -5,8 +5,9 @@ from unittest import TestCase, mock
 from geodataset.customized_geo_dataset import Moorings
 from geodataset.utils import BadAreaDefinition
 
+from geodataset.tests.base_test_class import GeodatasetTestBase
 
-class MooringsTestCases(TestCase):
+class MooringsTestCases(GeodatasetTestBase):
 
     def test_moorings_instantiation_with_another_pattern_of_filename(self):
         """
@@ -28,5 +29,5 @@ class MooringsTestCases(TestCase):
         """
         A healthy moorings file should be loaded properly with correct type.
         """
-        test_geodataset = Moorings(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
+        test_geodataset = Moorings(self.moorings_filename)
         self.assertIsInstance(test_geodataset, Moorings)

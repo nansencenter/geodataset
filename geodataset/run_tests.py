@@ -1,8 +1,11 @@
 import os
 import unittest
 
+print(os.environ['PYTHONPATH'])
+
 from tests.test_area_definitions import (
-    CustomAreaDefinitionTestCases, ValueBasedAreaDefinitionTestCases,
+    CustomAreaDefinitionTestCases, 
+    ValueBasedAreaDefinitionTestCases,
     ValueBasedMooringsAreaDefinitionTestCases)
 from tests.test_geo_dataset import GeodatasetTestCases
 from tests.test_interpolation import InterpolationTestCases

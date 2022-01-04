@@ -1,0 +1,5 @@
+*.pyc
+*.npz
+*.nc
+.ipynb_checkpoints/
+.vscode/

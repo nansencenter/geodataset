@@ -1,5 +1,4 @@
 import os
-from os.path import join
 from unittest import TestCase
 
 from geodataset.geo_dataset import GeoDataset
@@ -7,12 +6,13 @@ from geodataset.interpolation import GridGridInterpolator
 from geodataset.customized_geo_dataset import Moorings
 from pyresample.bilinear import NumpyBilinearResampler
 
+from geodataset.tests.base_test_class import GeodatasetTestBase
 
-class InterpolationTestCases(TestCase):
+class InterpolationTestCases(GeodatasetTestBase):
     def test_resampling_between_two_files(self):
         """Test that the resampler is set correctly with all its builtin attributes"""
-        target = GeoDataset(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc"))
-        source = Moorings(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
+        target = GeoDataset(self.osisaf_filename)
+        source = Moorings(self.moorings_filename)
         test_ggi = GridGridInterpolator(source.area, target.area, method=NumpyBilinearResampler,
                                         radius_of_influence=15000
                                        )

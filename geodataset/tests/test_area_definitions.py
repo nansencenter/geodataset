@@ -1,18 +1,20 @@
 import os
 from os.path import join
+import unittest
 from unittest import TestCase, mock
 
-from area_definitions import CustomAreaDefinitionBase, MooringsAreaDefinition
+from geodataset.area_definitions import CustomAreaDefinitionBase, MooringsAreaDefinition
 from geodataset.utils import BadAreaDefinition
 
+from geodataset.tests.base_test_class import GeodatasetTestBase
 
-class CustomAreaDefinitionTestCases(TestCase):
+class CustomAreaDefinitionTestCases(GeodatasetTestBase):
 
-    @mock.patch("area_definitions.CustomAreaDefinitionBase._set_corner_coordinates")
-    @mock.patch("area_definitions.CustomAreaDefinitionBase._set_shape")
-    @mock.patch("area_definitions.CustomAreaDefinitionBase._set_extent")
-    @mock.patch("area_definitions.CustomAreaDefinitionBase._set_area_id")
-    @mock.patch("area_definitions.CustomAreaDefinitionBase.__init__", return_value=None)
+    @mock.patch("geodataset.area_definitions.CustomAreaDefinitionBase._set_corner_coordinates")
+    @mock.patch("geodataset.area_definitions.CustomAreaDefinitionBase._set_shape")
+    @mock.patch("geodataset.area_definitions.CustomAreaDefinitionBase._set_extent")
+    @mock.patch("geodataset.area_definitions.CustomAreaDefinitionBase._set_area_id")
+    @mock.patch("geodataset.area_definitions.CustomAreaDefinitionBase.__init__", return_value=None)
     def test_method_create_area(self, mock_init, mock_set_area_id, mock_set_extent,
                                   mock_set_shape, mock_set_corner_coordinates
                                ):
@@ -25,11 +27,12 @@ class CustomAreaDefinitionTestCases(TestCase):
         mock_set_area_id.assert_called()
 
 
-class ValueBasedAreaDefinitionTestCases(TestCase):
+class ValueBasedAreaDefinitionTestCases(GeodatasetTestBase):
     """if the generic computational methods can calculated the number for one example, they can do
     the same for every type of file. Here in this case mooring file is selected as an example file"""
     def setUp(self):
-        self.testing_areadefinition = MooringsAreaDefinition(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
+        super().setUp()
+        self.testing_areadefinition = MooringsAreaDefinition(self.moorings_filename)
 
     def tearDown(self):
         del self.testing_areadefinition
@@ -37,37 +40,40 @@ class ValueBasedAreaDefinitionTestCases(TestCase):
     def test_method__set_corner_coordinates(self):
         """test that the coordinates of corners are correctly set"""
         self.testing_areadefinition._set_corner_coordinates()
-        self.assertEqual(self.testing_areadefinition.x_ur, 3547679.7638763348)
-        self.assertEqual(self.testing_areadefinition.x_ll, -3365213.0718218326)
-        self.assertEqual(self.testing_areadefinition.y_ur, -4016593.7395200725)
-        self.assertEqual(self.testing_areadefinition.y_ll, 2615518.679565192)
+        self.assertAlmostEqual(self.testing_areadefinition.x_ur, 1643649.8459712546)
+        self.assertAlmostEqual(self.testing_areadefinition.x_ll, -2256350.2237977847)
+        self.assertAlmostEqual(self.testing_areadefinition.y_ur, -1232777.8752833942)
+        self.assertAlmostEqual(self.testing_areadefinition.y_ll, 2017222.0174571355)
 
     def test_method__set_shape(self):
         """test that the shape is correctly set"""
         self.testing_areadefinition._set_shape()
-        self.assertEqual(self.testing_areadefinition.shape, (2367, 2467))
+        self.assertAlmostEqual(self.testing_areadefinition.shape, (326, 391))
 
     def test_method__set_area_id(self):
         """test that the area_id is correctly set"""
         self.testing_areadefinition._set_area_id()
-        self.assertEqual(self.testing_areadefinition.area_id, 'id for MooringsAreaDefinition object')
+        self.assertAlmostEqual(self.testing_areadefinition.area_id, 'id for MooringsAreaDefinition object')
 
 
-class ValueBasedMooringsAreaDefinitionTestCases(TestCase):
+class ValueBasedMooringsAreaDefinitionTestCases(GeodatasetTestBase):
     def test_method_area_extent(self):
         """Test that the corners and the area extent of AreaDefinition is set correctly"""
-        self.testing_areadefinition = MooringsAreaDefinition(join(os.environ['TEST_DATA_DIR'], "Moorings_2021d179.nc"))
+        self.testing_areadefinition = MooringsAreaDefinition(self.moorings_filename)
         self.testing_areadefinition._set_corner_coordinates()
         self.testing_areadefinition._set_extent()
-        self.assertEqual(self.testing_areadefinition.width, 6912978.442985907)
-        self.assertEqual(self.testing_areadefinition.height, 6632203.801141923)
-        self.assertEqual(self.testing_areadefinition.cell_size_x, 2803.316481340595)
-        self.assertEqual(self.testing_areadefinition.cell_size_y, 2803.1292481580404)
-        self.assertEqual(self.testing_areadefinition.x_corner_ll, -3366614.730062503)
-        self.assertEqual(self.testing_areadefinition.x_corner_ur, 3549081.422117005)
-        self.assertEqual(self.testing_areadefinition.y_corner_ll, 2614117.114941113)
-        self.assertEqual(self.testing_areadefinition.y_corner_ur, -4015192.1748959934)
-        self.assertEqual(self.testing_areadefinition.area_extent,
-                   (-3366614.730062503, 2614117.114941113, 3549081.422117005, -4015192.1748959934)
-                        )
+        self.assertAlmostEqual(self.testing_areadefinition.width, 3899999.349279247, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.height, 3249999.7459878484, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.cell_size_x, 9999.998331485249, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.cell_size_y, 9999.99921842415, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.x_corner_ll, -2261350.2229635273, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.x_corner_ur, 1648649.8451369973, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.y_corner_ll, 2012222.0178479233, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.y_corner_ur, -1227777.875674182, 1)
+        self.assertAlmostEqual(self.testing_areadefinition.area_extent,
+            (-2261350.2229635273, 2012222.0178479233, 1648649.8451369973, -1227777.875674182), 1)
         del self.testing_areadefinition
+
+
+if __name__ == "__main__":
+    unittest.main(failfast=True)

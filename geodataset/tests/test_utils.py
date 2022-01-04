@@ -6,13 +6,14 @@ import netcdftime
 from netCDF4 import Dataset
 from utils import get_time_converter, get_time_name
 
+from geodataset.tests.base_test_class import GeodatasetTestBase
 
-class UtilsTestCases(TestCase):
+class UtilsTestCases(GeodatasetTestBase):
 
     def test_get_time_name(self):
         """ Test that the name of variable that contains time inside the netcdf file is correctly
         found by the method."""
-        with Dataset(join(os.environ['TEST_DATA_DIR'], "ice_conc_nh_polstere-100_multi_200611151200.nc")) as nc:
+        with Dataset(self.osisaf_filename) as nc:
             answer = get_time_name(nc)
             self.assertEqual(answer, 'time')
 
