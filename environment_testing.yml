@@ -1,0 +1,15 @@
+name: geodataset_testing
+channels:
+  - conda-forge
+dependencies:
+  - cartopy
+  - pip
+  - pip:
+    - cmocean
+    - cython
+    - matplotlib
+    - mock
+    - netcdf4
+    - numpy
+    - pyyaml
+    - scipy
