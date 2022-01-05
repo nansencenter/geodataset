@@ -32,6 +32,8 @@ jobs:
     - name: Test with pytest
       run: |
         conda install pytest
+        pip install gdown
+        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx
         pytest
       env:
           TEST_DATA_DIR: $GITHUB_WORKSPACE
