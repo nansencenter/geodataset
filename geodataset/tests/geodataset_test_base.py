@@ -13,7 +13,7 @@ class GeodatasetTestBase(unittest.TestCase):
         self.test_data_dir = os.environ['TEST_DATA_DIR']
 
         if not os.path.exists(self.test_data_dir):
-            raise ValueError('Test data directory %s does not exist' % tdir)
+            raise ValueError('Test data directory %s does not exist' % self.test_data_dir)
 
     def set_envs(self, new_envs):
         """
