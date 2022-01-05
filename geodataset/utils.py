@@ -1,83 +1,76 @@
-from datetime import datetime
+import inspect
+import os
+import logging
 
-import netcdftime as NCT
-
-
-def get_time_converter(time):
+def clean_path(path):
     """
-    reftime,time_converter = get_time_converter(time)
-    *input:
-    time = nc.variables['time'],
-    where nc is a netCDF4.Dataset object
-    *outputs:
-    reftime - datetime.datetime object
-    time_converter netCDF4.netcdftime.utime object
+    removes trailing '/' or '//' to make os.path.split work as expected
+    Parameters:
+    -----------
+    path : str
+    Returns:
+    --------
+    clean_path : str
+        eg a//b/c/ -> a/b/c
     """
-    date_templates = [
-        '%Y%m%dT%H%M%S',
-        '%Y-%m-%dT%H%M%S',
-        '%Y%m%dT%H:%M:%S',
-        '%Y-%m-%dT%H:%M:%S',
-        '%Y%m%dT%H-%M-%S',
-        '%Y-%m-%dT%H-%M-%S',
-    ]
+    s = path
+    while 2*os.sep in s:
+        s = s.replace(2*os.sep, os.sep)
+    while s.endswith(os.sep):
+        s = s[:-1]
+    return s
 
-    tu        = time.units
-    time_info = tu.split()
-
-    # determine time format of reference point:
-    unit = time_info[0]# 1st word gives units
-    unit = unit.strip('s')
-    if unit=='econd':
-        unit = 'second'
-
-    # try to match time info with strptime
-    time_str_split = tu.replace('T', ' ').replace('Z', '').split()
-    date_str = time_str_split[2] + 'T' + time_str_split[3]
-    reftime = None
-    for date_template in date_templates:
-        try:
-            reftime = datetime.strptime(date_str, date_template)
-        except:
-            pass
-        else:
-            break
-
-    if reftime is None:
-        raise ValueError('Unknown format of time in ', tu)
-
-    init_string = reftime.strftime(f'{unit}s since %Y-%m-%d %H-%M-%S')
-
-    if 'calendar' in time.ncattrs():
-        time_converter = NCT.utime(init_string, calendar=time.calendar)
-    else:
-        time_converter = NCT.utime(init_string)
-
-    return time_converter
-
-
-def get_time_name(nc):
+def split_path(path):
     """
-    NEMO outputs call time "time_counter"
-    CS2-SMOS thickness files use 'tc' for time dimension, but
-    'time_bnds' for time variable
+    safer version of os.path.split
+    Parameters:
+    -----------
+    path : str
+    Returns:
+    --------
+    split_path : list(str)
+        eg a/b/c -> [a/b, c]
+        eg a//b/c/ -> [a/b, c] (fails with os.path.split)
     """
-    time_name = None
-    for tname in [
-            'time',
-            'time0', #cfsr
-            'time_counter',
-            'time_bnds',
-            ]:
-        if tname in nc.dimensions:
-            time_name = tname
-            break
+    return os.path.split(clean_path(path))
 
-    return time_name
-
-class BadAreaDefinition(Exception):
-    """Exception raised for errors in the definition of area. This is a custom exception for
-    development purposes. should not deal with the user. In the loop of finding a proper class for
-    a netcdf file, this error cause the loop to go the next candidate class for instatiation.
+def get_module_name(cls):
     """
-    pass
+    get name of module that class belongs to. Starts with file containing the class,
+    then searches parent directories until it finds '__init__.py'.
+    If it is not found then the file's basename is returned (without the .py extension).
+    Parameter:
+    ----------
+    cls: type
+        class type eg object.__class__
+    Returns:
+    --------
+    module_name : str
+    """
+    path = os.path.abspath(inspect.getfile(cls))
+    p1, basename = split_path(os.path.splitext(path)[0])
+    p2 = basename
+    stop = False
+    while p1 != '/':
+        p1, p2_ = split_path(p1)
+        p2 = f'{p2_}.{p2}'
+        if stop:
+            return p2
+        stop = '__init__.py' in os.listdir(p1) #p1 is the root module - stop after one more iteration
+    return 
+
+def get_logger(cls):
+    """
+    get logger which takes its name from the class it will be go into
+    Parameters:
+    -----------
+    cls : type
+        class type eg object.__class__
+    Returns:
+    --------
+    logger : logging.Logger
+        logger with name from cls
+        and with NullHandler added
+    """
+    logger = logging.getLogger(get_module_name(cls))
+    logger.addHandler(logging.NullHandler())
