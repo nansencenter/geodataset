@@ -11,5 +11,6 @@ dependencies:
     - mock
     - netcdf4
     - numpy
+    - pyproj
     - pyyaml
     - scipy
