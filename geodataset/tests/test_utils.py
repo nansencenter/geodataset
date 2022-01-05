@@ -4,7 +4,7 @@ from unittest import TestCase, mock
 
 import netcdftime
 from netCDF4 import Dataset
-from utils import get_time_converter, get_time_name
+from geodataset.utils import get_time_converter, get_time_name
 
 from geodataset.tests.base_test_class import GeodatasetTestBase
 

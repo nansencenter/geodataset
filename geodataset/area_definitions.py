@@ -63,7 +63,7 @@ class CustomAreaDefinitionBase():
         self.shape = (self.raster_height, self.raster_width)
 
     def _set_area_id(self):
-        self.area_id = 'id for '+self.__class__.__name__+' object'
+        self.area_id = 'id for ' + self.__class__.__name__ + ' object'
 
     def get_area(self):
         return AreaDefinition.from_extent(self.area_id, self.proj4_string, self.shape, self.area_extent)

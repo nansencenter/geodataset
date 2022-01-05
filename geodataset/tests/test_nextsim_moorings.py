@@ -1,5 +1,6 @@
 import os
 from os.path import join
+import unittest
 from unittest import TestCase, mock
 
 from geodataset.customized_geo_dataset import Moorings
@@ -17,13 +18,13 @@ class MooringsTestCases(GeodatasetTestBase):
         with self.assertRaises(BadAreaDefinition):
             Moorings("")
 
-    @mock.patch("area_definitions.MooringsAreaDefinition.__init__", return_value=None)
+    @mock.patch("geodataset.area_definitions.MooringsAreaDefinition.__init__", return_value=None)
     def test_moorings_instantiation_without_area_definition_class(self, mock_init):
         """
         In the case of lack of addressed files, FileNotFoundError must be raised.
         """
         with self.assertRaises(FileNotFoundError):
-            Moorings("Moorings_1234.nc")#"Moorings_1234.nc"is not a existing file!
+            Moorings("Moorings_1234.nc") # "Moorings_1234.nc"is not a existing file!
 
     def test_moorings_class_with_a_healthy_file_loading(self):
         """
@@ -31,3 +32,6 @@ class MooringsTestCases(GeodatasetTestBase):
         """
         test_geodataset = Moorings(self.moorings_filename)
         self.assertIsInstance(test_geodataset, Moorings)
+
+if __name__ == "__main__":
+    unittest.main()
