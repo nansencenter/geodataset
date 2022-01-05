@@ -24,7 +24,7 @@ class CustomAreaDefinitionBase():
         with Dataset(self.file_path) as nc:
             corner_rows_cols = [-1, 0, -1, 0], [0, -1, -1, 0]
 
-            if nc[self.lon_name].ndim ==1 and nc[self.lat_name].ndim==1:
+            if nc[self.lon_name].ndim == 1 and nc[self.lat_name].ndim == 1:
                 lon_array = nc[self.lon_name][:].reshape(-1, 1)
                 lat_array = nc[self.lat_name][:].reshape(1, -1)
                 lon_array = np.broadcast_to(lon_array, (nc[self.lon_name].size, nc[self.lat_name].size))
@@ -36,22 +36,22 @@ class CustomAreaDefinitionBase():
                         lon_array[corner_rows_cols],
                         lat_array[corner_rows_cols],
                             )
-        #x[-1, 0] is the lower left corner of x       <= ll
-        #x[0, -1] is the upper right corner of x      <= ur
-        #x[-1, -1] is the lower right corner of x     <= lr
-        #x[0, 0] is the upper left corner of x        <= ul
-        #since we passed (in above line, corner_rows_cols) the "ll" the first and then "ur" as the
+        # x[-1, 0] is the lower left corner of x       <= ll
+        # x[0, -1] is the upper right corner of x      <= ur
+        # x[-1, -1] is the lower right corner of x     <= lr
+        # x[0, 0] is the upper left corner of x        <= ul
+        # since we passed (in above line, corner_rows_cols) the "ll" the first and then "ur" as the
         # second, the "ur" is always at [1,1] in the matrix and "ll" is always at [0,0] in the matrix.
-        #Since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
-        ## is always at [3,3] in the matrix and "lr" is always at [2,2] in the matrix
-        self.x_ll = x[0, 0] if x.ndim>1 else x[0]
-        self.y_ll = y[0, 0] if y.ndim>1 else y[0]
-        self.x_ur = x[1, 1] if x.ndim>1 else x[1]
-        self.y_ur = y[1, 1] if y.ndim>1 else y[1]
-        self.x_lr = x[2, 2] if x.ndim>1 else x[2]
-        self.y_lr = y[2, 2] if y.ndim>1 else y[2]
-        self.x_ul = x[3, 3] if x.ndim>1 else x[3]
-        self.y_ul = y[3, 3] if y.ndim>1 else y[3]
+        # Since we passed (in above line) the "lr" as the third and then "ul" as the fourth, the "ul"
+        # is always at [3,3] in the matrix and "lr" is always at [2,2] in the matrix
+        self.x_ll = x[0, 0] if x.ndim > 1 else x[0]
+        self.y_ll = y[0, 0] if y.ndim > 1 else y[0]
+        self.x_ur = x[1, 1] if x.ndim > 1 else x[1]
+        self.y_ur = y[1, 1] if y.ndim > 1 else y[1]
+        self.x_lr = x[2, 2] if x.ndim > 1 else x[2]
+        self.y_lr = y[2, 2] if y.ndim > 1 else y[2]
+        self.x_ul = x[3, 3] if x.ndim > 1 else x[3]
+        self.y_ul = y[3, 3] if y.ndim > 1 else y[3]
 
     def _set_shape(self):
         """calculate number of cells and shape. If x and y are present in the netcdf file, then the
@@ -59,7 +59,6 @@ class CustomAreaDefinitionBase():
         with Dataset(self.file_path) as nc:
             self.raster_width = nc.dimensions[self.x_dimension_name].size
             self.raster_height = nc.dimensions[self.y_dimension_name].size
-
 
         self.shape = (self.raster_height, self.raster_width)
 
