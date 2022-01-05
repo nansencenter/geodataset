@@ -32,7 +32,7 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest gdown
-        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx
+        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O /home/runner/work/
         pytest
       env:
-          TEST_DATA_DIR: $GITHUB_WORKSPACE
+          TEST_DATA_DIR: /home/runner/work/
