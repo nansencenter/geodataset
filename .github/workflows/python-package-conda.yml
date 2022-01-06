@@ -12,21 +12,14 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - name: Cache conda packages
+    - name: Cache conda
       uses: actions/cache@v2
       env:
         CACHE_NUMBER: 1
       with:
-        path: ~/conda_pkgs_dir
-        key:
-          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-          hashFiles('environment_testing.yml') }}
-    - name: Cache conda environment
-      uses: actions/cache@v2
-      env:
-        CACHE_NUMBER: 1
-      with:
-        path: /usr/share/miniconda3/envs
+        path: |
+          ~/conda_pkgs_dir
+          /usr/share/miniconda3/envs
         key:
           ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
           hashFiles('environment_testing.yml') }}
