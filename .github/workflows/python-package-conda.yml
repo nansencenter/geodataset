@@ -12,8 +12,8 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - name: Setup conda 
-      uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v2
+    - name: Setup Python environment
       with:
         environment-file: environment_testing.yml
         miniforge-version: latest
