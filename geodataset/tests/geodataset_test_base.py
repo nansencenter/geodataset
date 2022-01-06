@@ -14,6 +14,8 @@ class GeodatasetTestBase(unittest.TestCase):
 
         if not os.path.exists(self.test_data_dir):
             raise ValueError('Test data directory %s does not exist' % self.test_data_dir)
+        
+        self.mppfile = os.path.join(self.test_data_dir, 'NpsNextsim.mpp')
 
     def set_envs(self, new_envs):
         """
