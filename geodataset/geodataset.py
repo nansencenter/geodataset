@@ -39,6 +39,7 @@ class GeoDataset(Dataset):
         self.spatial_dim_names = ('x', 'y')
         self.lonlat_names = ('longitude', 'latitude')
         self.time_name = 'time'
+        self.variable_names = self._get_variable_names()
         self.logger = get_logger(self.__class__)
 
     def __setattr__(self, att, val):
@@ -256,6 +257,18 @@ class GeoDataset(Dataset):
         dto        = min(self.datetimes, key=lambda x: abs(x - pivot))
         time_index = self.datetimes.index(dto)
         return dto, time_index
+
+    def _get_variable_names(self):
+
+        bad_names = list(self.dimensions.keys())
+        var_names = list(self.variables.keys())
+        bad_names.extend(list(self.projection_names))
+        bad_names += ['time_bnds']
+        for bad_name in bad_names:
+            if bad_name in var_names:
+                var_names.remove(bad_name)
+        return var_names
+        
 
 
 class NetcdfArcMFC(GeoDataset):

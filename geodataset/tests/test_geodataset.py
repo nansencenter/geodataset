@@ -18,7 +18,7 @@ class GeoDatasetTest(GeodatasetTestBase):
         self.osisaf_std_name = 'sea_ice_x_displacement'
         self.osisaf_max = 49.51771
         self.moorings_filename = os.path.join(os.environ['TEST_DATA_DIR'], "Moorings.nc")
-        self.moorings_var = 'sic'        
+        self.moorings_var = 'sic'
 
     def test_init(self):
         with Dataset(self.osisaf_filename, 'r') as ds:
@@ -234,7 +234,7 @@ class GeoDatasetTest(GeodatasetTestBase):
                 ]
         self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
 
-    def test_method_nearestDate(self):
+    def test_method_get_nearest_date(self):
         """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
         netcdf file) than the 2010."""
         with GeoDataset(self.osisaf_filename, 'r') as ds:
@@ -242,6 +242,15 @@ class GeoDatasetTest(GeodatasetTestBase):
             ans, ans_index = ds.get_nearest_date(dt.datetime(2020, 1, 1, 12, 0))
             self.assertEqual(ans, dt.datetime(2022, 1, 3, 12, 0))
             self.assertEqual(ans_index, 0)
+
+    def test_get_var_names(self):
+        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
+        netcdf file) than the 2010."""
+        with GeoDataset(self.osisaf_filename, 'r') as ds:
+            var_names = ds._get_variable_names()
+            self.assertEqual(var_names, 
+            ['lat', 'lon', 'dt0', 'lon1', 'lat1', 'dt1',
+            'dX', 'dY', 'status_flag', 'uncert_dX_and_dY'])
 
 
 if __name__ == "__main__":
