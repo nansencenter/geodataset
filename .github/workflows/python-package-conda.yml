@@ -15,6 +15,7 @@ jobs:
       with:
         environment-file: environment_testing.yml
         miniforge-version: latest
+        activate-environment: geodataset_testing
     - name: Install dependencies
       run: |
         pip install netcdftime
