@@ -9,19 +9,30 @@ from geodataset.tests.geodataset_test_base import GeodatasetTestBase
 from geodataset.geodataset import GeoDataset, Dataset, ProjectionInfo
 
 class GeoDatasetTest(GeodatasetTestBase):
+    def setUp(self):
+        super().setUp()
+
+        self.osisaf_filename = os.path.join(os.environ['TEST_DATA_DIR'], "ice_drift_nh_polstere-625_multi-oi_202201011200-202201031200.nc")
+        self.osisaf_var = 'dX'
+        self.osisaf_units = 'km'
+        self.osisaf_std_name = 'sea_ice_x_displacement'
+        self.osisaf_max = 49.51771
+        self.moorings_filename = os.path.join(os.environ['TEST_DATA_DIR'], "Moorings.nc")
+        self.moorings_var = 'sic'        
+
     def test_init(self):
-        f = os.path.join(self.test_data_dir, 'ice_drift_nh_polstere-625_multi-oi_202201011200-202201031200.nc')
-        ds = Dataset(f, 'r')
-        nc = GeoDataset(f, 'r')
-        self.assertEqual(ds.ncattrs(), nc.ncattrs())
-        self.assertEqual(list(ds.dimensions), list(nc.dimensions))
-        self.assertEqual(list(ds.variables), list(nc.variables))
-        self.assertEqual(vars(nc.projection), vars(ProjectionInfo()))
-        self.assertEqual(nc.projection_names, ('Polar_Stereographic_Grid', 'polar_stereographic'))
-        self.assertEqual(nc.spatial_dim_names, ('x', 'y'))
-        self.assertEqual(nc.lonlat_names, ('longitude', 'latitude'))
-        self.assertEqual(nc.time_name, 'time')
-        self.assertFalse(nc.is_lonlat_dim)
+        with Dataset(self.osisaf_filename, 'r') as ds:
+            with GeoDataset(self.osisaf_filename, 'r') as nc:
+                self.assertEqual(ds.ncattrs(), nc.ncattrs())
+                self.assertEqual(list(ds.dimensions), list(nc.dimensions))
+                self.assertEqual(list(ds.variables), list(nc.variables))
+                self.assertEqual(vars(nc.projection), vars(ProjectionInfo()))
+                self.assertEqual(nc.projection_names, 
+                ('Polar_Stereographic_Grid', 'polar_stereographic'))
+                self.assertEqual(nc.spatial_dim_names, ('x', 'y'))
+                self.assertEqual(nc.lonlat_names, ('longitude', 'latitude'))
+                self.assertEqual(nc.time_name, 'time')
+                self.assertFalse(nc.is_lonlat_dim)
 
     @patch.multiple(GeoDataset, __init__=MagicMock(return_value=None), dimensions=DEFAULT)
     def test_is_lonlat_dim(self, **kwargs):
@@ -222,6 +233,16 @@ class GeoDatasetTest(GeodatasetTestBase):
                 call().__setitem__(slice(None, None, None), 'data'),
                 ]
         self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
+
+    def test_method_nearestDate(self):
+        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
+        netcdf file) than the 2010."""
+        with GeoDataset(self.osisaf_filename, 'r') as ds:
+            #ds.datetimes.append(dt.datetime(2000, 1, 1, 12, 0))
+            ans, ans_index = ds.get_nearest_date(dt.datetime(2020, 1, 1, 12, 0))
+            self.assertEqual(ans, dt.datetime(2022, 1, 3, 12, 0))
+            self.assertEqual(ans_index, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

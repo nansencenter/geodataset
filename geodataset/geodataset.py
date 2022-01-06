@@ -237,6 +237,27 @@ class GeoDataset(Dataset):
         dst_var.setncatts(ncatts)
         dst_var[:] = data
 
+    def get_nearest_date(self, pivot):
+        """ Get date from the Dataset closest to the input date
+        
+        Parameters
+        ----------
+        pivot : datetime.datetime
+            searching date
+
+        Returns
+        -------
+        dto : datetime.datetime
+            value nearest date
+        time_index : int
+            index of the nearest date
+
+        """
+        dto        = min(self.datetimes, key=lambda x: abs(x - pivot))
+        time_index = self.datetimes.index(dto)
+        return dto, time_index
+
+
 class NetcdfArcMFC(GeoDataset):
     """ wrapper for netCDF4.Dataset with info about ArcMFC products """
     
