@@ -252,6 +252,13 @@ class GeoDatasetTest(GeodatasetTestBase):
             ['lat', 'lon', 'dt0', 'lon1', 'lat1', 'dt1',
             'dX', 'dY', 'status_flag', 'uncert_dX_and_dY'])
 
+    def test_get_variable_array(self):
+        with GeoDataset(self.osisaf_filename, 'r') as ds:
+            a = ds.get_variable_array('dX')
+            b = ds.get_variable_array('lon')
+        self.assertEqual(a.shape, (177, 119))
+        self.assertEqual(b.shape, (177, 119))
+
 
 if __name__ == "__main__":
     unittest.main()

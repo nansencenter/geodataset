@@ -259,7 +259,14 @@ class GeoDataset(Dataset):
         return dto, time_index
 
     def _get_variable_names(self):
+        """ Find valid names of variables excluding names of dimensions, projections, etc
+        
+        Returns
+        -------
+        var_names : list of str
+            names of valid variables
 
+        """
         bad_names = list(self.dimensions.keys())
         var_names = list(self.variables.keys())
         bad_names.extend(list(self.projection_names))
@@ -269,6 +276,15 @@ class GeoDataset(Dataset):
                 var_names.remove(bad_name)
         return var_names
         
+    def get_variable_array(self, var_name, time_index=0):
+        ds_var = self[var_name]
+        array = ds_var[:]
+        if 'time' in ds_var.dimensions:
+            time_axis = ds_var.dimensions.index('time')
+            array = array.take(indices=time_index, axis=time_axis)
+        return array
+
+
 
 
 class NetcdfArcMFC(GeoDataset):
