@@ -16,8 +16,8 @@ jobs:
         environment-file: environment_testing.yml
         miniforge-version: latest
         activate-environment: geodataset_testing
-      shell: bash -l {0}
-        run: |
+    - shell: bash -l {0}
+      run: |
           pip install netcdftime pytest gdown
 #    - name: Lint with flake8
 #      run: |
