@@ -10,13 +10,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.10.1
+    - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
         environment-file: environment_testing.yml
         miniforge-version: latest
         activate-environment: geodataset_testing
     - name: Install dependencies
+    - shell: bash -l {0}
       run: |
         pip install netcdftime
 #    - name: Lint with flake8
