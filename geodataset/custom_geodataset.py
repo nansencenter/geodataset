@@ -3,38 +3,39 @@ from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
 from geodataset.projection_info import ProjectionInfo
 from geodataset.utils import InvalidDataset
 
-class CmemsMetIceChart(GeoDatasetRead):
+class CustomDatasetRead(GeoDatasetRead):
+    _filename_prefix = None
+    _filename_suffix = '.nc'
     def _check_input_file(self):
-        if not os.path.basename(self.filename).startswith('ice_conc_svalbard_'):
+        n = os.path.basename(self.filename)
+        if not (n.startswith(self._filename_prefix) and 
+                n.endswith(self._filename_suffix)):
             raise InvalidDataset
-    
+
+
+class CmemsMetIceChart(CustomDatasetRead):
+    _filename_prefix = 'ice_conc_svalbard_'
+
     def _get_lonlat_names(self):
         return 'lon', 'lat'
 
-
-class NerscDeformation(GeoDatasetRead):
-    def _check_input_file(self):
-        if not os.path.basename(self.filename).startswith('arctic_2km_deformation_'):
-            raise InvalidDataset
-    
+class NerscSarProducts(CustomDatasetRead):
+    pass
     def _get_lonlat_names(self):
         return 'absent', 'absent'
+    
+
+class NerscDeformation(NerscSarProducts):
+    _filename_prefix = 'arctic_2km_deformation_'
 
 
 class NerscIceType(GeoDatasetRead):
-    def _check_input_file(self):
-        if not os.path.basename(self.filename).startswith('arctic_2km_icetype_'):
-            raise InvalidDataset
-    
-    def _get_lonlat_names(self):
-        return 'absent', 'absent'
+    _filename_prefix = 'arctic_2km_icetype_'
 
 
 class JaxaAmsr2IceConc(GeoDatasetRead):
-    def _check_input_file(self):
-        base = os.path.basename(self.filename)
-        if not (base.startswith('Arc_') and base.endswith('_res3.125_pyres.nc')):
-            raise InvalidDataset
+    _filename_prefix = 'Arc_'
+    _filename_suffix = '_res3.125_pyres.nc'
     
     def _get_lonlat_names(self):
         return 'longitude', 'latitude'
