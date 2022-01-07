@@ -1,9 +1,9 @@
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDataset
-from geodataset.custom_geodataset import NetcdfArcMFC, CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc
+from geodataset.custom_geodataset import NetcdfArcMFC, CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc, Etopo
 
 def open_netcdf(file_address):
-    classes = [GeoDatasetRead, CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc]
+    classes = [CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc, Etopo, GeoDatasetRead]
     for class_ in classes:
         try:
             obj = class_(file_address)

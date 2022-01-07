@@ -1,4 +1,7 @@
 import os
+
+import numpy as np
+
 from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
 from geodataset.projection_info import ProjectionInfo
 from geodataset.utils import InvalidDataset
@@ -30,16 +33,24 @@ class NerscDeformation(NerscSarProducts):
     _filename_prefix = 'arctic_2km_deformation_'
 
 
-class NerscIceType(GeoDatasetRead):
+class NerscIceType(NerscSarProducts):
     _filename_prefix = 'arctic_2km_icetype_'
 
 
-class JaxaAmsr2IceConc(GeoDatasetRead):
+class JaxaAmsr2IceConc(CustomDatasetRead):
     _filename_prefix = 'Arc_'
     _filename_suffix = '_res3.125_pyres.nc'
     
     def _get_lonlat_names(self):
         return 'longitude', 'latitude'
+
+
+class Etopo(CustomDatasetRead):
+    _filename_prefix = 'ETOPO_Arctic_10arcmin'
+    
+    def get_lonlat_arrays(self):
+        lon, lat = super().get_lonlat_arrays()
+        return np.meshgrid(lon, lat)
 
 
 class NetcdfArcMFC(GeoDatasetWrite):
