@@ -46,8 +46,8 @@ class JaxaAmsr2IceConc(CustomDatasetRead):
 
 
 class Etopo(CustomDatasetRead):
-    _filename_prefix = 'ETOPO_Arctic_10arcmin'
-    
+    _filename_prefix = 'ETOPO_Arctic_'
+
     def get_lonlat_arrays(self):
         lon, lat = super().get_lonlat_arrays()
         return np.meshgrid(lon, lat)

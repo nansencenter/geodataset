@@ -6,6 +6,7 @@ from geodataset.tools import open_netcdf
 
 from geodataset.tests.base_for_tests import BaseForTests
 
+
 class ToolsTests(BaseForTests):
     def setUp(self):
         super().setUp()
@@ -25,6 +26,7 @@ class ToolsTests(BaseForTests):
             print(nc_file, len(lon.shape))
             self.assertEqual(len(lon.shape), 2)
             self.assertEqual(len(lat.shape), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
