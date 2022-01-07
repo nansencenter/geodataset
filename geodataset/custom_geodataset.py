@@ -19,6 +19,7 @@ class CmemsMetIceChart(CustomDatasetRead):
     def _get_lonlat_names(self):
         return 'lon', 'lat'
 
+
 class NerscSarProducts(CustomDatasetRead):
     pass
     def _get_lonlat_names(self):

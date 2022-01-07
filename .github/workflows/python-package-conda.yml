@@ -3,7 +3,7 @@ name: Python Package using Conda
 on: [push]
 
 jobs:
-  build-linux:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -37,6 +37,7 @@ jobs:
         gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O /home/runner/work/test_data/
         gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
       if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash -l {0}
     - name: Test with pytest
       run: |
         $CONDA/bin/pytest
