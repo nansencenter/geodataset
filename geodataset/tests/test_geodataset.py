@@ -2,7 +2,7 @@ import os
 import numpy as np
 import unittest
 import datetime as dt
-from mock import patch, call, MagicMock, DEFAULT
+from mock import patch, call, Mock, MagicMock, DEFAULT
 import subprocess
 
 from geodataset.tests.base_for_tests import BaseForTests
@@ -268,6 +268,32 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             lon, lat = ds.get_lonlat_arrays()
         self.assertEqual(len(lon.shape), 2)
         self.assertEqual(len(lat.shape), 2)
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            variables=DEFAULT,
+            )
+    def test_get_lonlat_names(self, **kwargs):
+        ''' test f4 with _FillValue defined '''
+        variables = {
+            'lon': Mock(),
+            'lat': Mock(),
+            'sic': Mock(),
+        }
+        variables['lon'].ncattrs.return_value = ['standard_name', 'a', 'b']
+        variables['lat'].ncattrs.return_value = ['standard_name', 'c', 'd']
+        variables['sic'].ncattrs.return_value = ['standard_name', 'c', 'd']
+        variables['lon'].standard_name = 'longitude'
+        variables['lat'].standard_name = 'latitude'
+        variables['sic'].standard_name = 'sea_ice_concentration'
+        
+        with GeoDatasetRead() as ds:
+            ds.variables = variables
+            lon_name, lat_name = ds._get_lonlat_names()
+
+        self.assertEqual(lon_name, 'lon')
+        self.assertEqual(lat_name, 'lat')
 
 if __name__ == "__main__":
     unittest.main()
