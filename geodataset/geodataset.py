@@ -3,8 +3,8 @@ import pyproj
 import datetime as dt
 from netCDF4 import Dataset
 import netcdftime
+from pyresample.utils import load_cf_area
 
-from geodataset import get_logger
 from geodataset.utils import InvalidDataset
 from geodataset.projection_info import ProjectionInfo
 
@@ -18,14 +18,14 @@ class GeoDatasetBase(Dataset):
 
     def __init__(self, *args, **kwargs):
         """
-        Initialise the object using netCDF4.Dataset() and add logger
+        Initialise the object using netCDF4.Dataset()
 
         Sets:
         -----
-        logger : logging.Logger
+        filename : str
+            name of input file
         """
         super().__init__(*args, **kwargs)
-        self.logger = get_logger(type(self))
         self.filename = args[0]
         self._check_input_file()
 

@@ -10,7 +10,7 @@ jobs:
     - name: Cache
       uses: actions/cache@v2
       env:
-        CACHE_NUMBER: 1
+        CACHE_NUMBER: 2
       with:
         path: |
           /usr/share/miniconda

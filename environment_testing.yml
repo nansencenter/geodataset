@@ -4,6 +4,7 @@ channels:
 dependencies:
   - cartopy
   - pip
+  - pykdtree
   - pip:
     - cmocean
     - cython
@@ -14,3 +15,4 @@ dependencies:
     - pyproj
     - pyyaml
     - scipy
+    - pyresample
