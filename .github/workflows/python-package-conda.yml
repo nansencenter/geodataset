@@ -50,6 +50,7 @@ jobs:
         gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
       if: steps.cache.outputs.cache-hit != 'true'
     - name: Test with pytest
+      run: |
         pytest
       env:
           TEST_DATA_DIR: /home/runner/work/test_data/
