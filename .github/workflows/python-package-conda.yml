@@ -5,11 +5,6 @@ on: [push]
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
     - name: Cache
@@ -18,20 +13,16 @@ jobs:
         CACHE_NUMBER: 1
       with:
         path: |
-          $CONDA
+          /usr/share/miniconda
           /home/runner/work/test_data
         key:
           ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
           hashFiles('environment_testing.yml') }}
       id: cache
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
-        conda env update --file environment_testing.yml --name base
-        pip install netcdftime pytest gdown
+        $CONDA/bin/conda env update --file environment_testing.yml --name base
+        $CONDA/bin/pip install netcdftime pytest gdown
       if: steps.cache.outputs.cache-hit != 'true'
     - name: Download test data
       run: |
