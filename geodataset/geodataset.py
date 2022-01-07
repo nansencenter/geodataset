@@ -1,11 +1,14 @@
-import numpy as np
-import pyproj
 import datetime as dt
+
 from netCDF4 import Dataset
 import netcdftime
+import numpy as np
+import pyproj
+from pyproj.exceptions import CRSError
 from pyresample.utils import load_cf_area
+from xarray.core.variable import MissingDimensionsError
 
-from geodataset.utils import InvalidDataset
+from geodataset.utils import InvalidDatasetError
 from geodataset.projection_info import ProjectionInfo
 
 class GeoDatasetBase(Dataset):
@@ -35,7 +38,7 @@ class GeoDatasetBase(Dataset):
         self.__dict__[att] = val
 
     def _check_input_file(self):
-        """ Check if input file is valid for the current class or raise InvalidDataset """
+        """ Check if input file is valid for the current class or raise InvalidDatasetError """
         pass
 
     def convert_time_data(self, tdata):
@@ -318,6 +321,7 @@ class GeoDatasetRead(GeoDatasetBase):
         self.projection = ProjectionInfo()
         self.lonlat_names = self._get_lonlat_names()
         self.variable_names = self._get_variable_names()
+        self.area_definition = self._get_area_definition()
 
     def _get_lonlat_names(self):
         """ Get names of latitude longitude following CF and ACDD standards """
@@ -332,7 +336,7 @@ class GeoDatasetRead(GeoDatasetBase):
                     lat_var_name = var_name
             if lon_var_name and lat_var_name:
                 return lon_var_name, lat_var_name
-        raise InvalidDataset
+        raise InvalidDatasetError
 
     def _get_variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
@@ -351,6 +355,12 @@ class GeoDatasetRead(GeoDatasetBase):
             if bad_name in var_names:
                 var_names.remove(bad_name)
         return var_names
+    
+    def _get_area_definition(self):
+        try:
+            area, extra = load_cf_area(self.filename)
+        except [MissingDimensionsError, CRSError, KeyError, ValueError] as e:
+            raise InvalidDatasetError
         
     def get_variable_array(self, var_name, time_index=0):
         ds_var = self[var_name]

@@ -1,1 +1,1 @@
-class InvalidDataset(Exception): pass
+class InvalidDatasetError(Exception): pass
