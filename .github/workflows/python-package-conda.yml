@@ -12,29 +12,31 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - name: Cache conda
+    - name: Cache
       uses: actions/cache@v2
       env:
         CACHE_NUMBER: 1
       with:
         path: |
-          /usr/share/miniconda3/envs
           /home/runner/work/test_data
         key:
           ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
           hashFiles('environment_testing.yml') }}
       id: cache
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        environment-file: environment_testing.yml
-        miniforge-version: latest
-        activate-environment: geodataset_testing
-      if: steps.cache.outputs.cache-hit != 'true'
-    - name: Install extra packages for testing
+#    - name: Set up Python 3.10.1
+#      uses: actions/setup-python@v2
+#      with:
+#        python-version: 3.10.1
+    - name: Add conda to system path
       run: |
-          pip install netcdftime pytest gdown
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda env update --file environment_testing.yml --name base
+        pip install netcdftime pytest gdown
       if: steps.cache.outputs.cache-hit != 'true'
-    - name: Test with pytest
+    - name: Download test data
       run: |
         mkdir -p /home/runner/work/test_data
         gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
@@ -46,6 +48,8 @@ jobs:
         gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O /home/runner/work/test_data/
         gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O /home/runner/work/test_data/
         gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
+      if: steps.cache.outputs.cache-hit != 'true'
+    - name: Test with pytest
         pytest
       env:
           TEST_DATA_DIR: /home/runner/work/test_data/
