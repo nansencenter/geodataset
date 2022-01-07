@@ -308,9 +308,24 @@ class GeoDatasetRead(GeoDatasetBase):
         self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
         self.spatial_dim_names = ('x', 'y')
         self.time_name = 'time'
-        self.lonlat_names = ('longitude', 'latitude')
         self.projection = ProjectionInfo()
+        self.lonlat_names = self._get_lonlat_names()
         self.variable_names = self._get_variable_names()
+
+    def _get_lonlat_names(self):
+        """ Get names of latitude longitude following CF and ACDD standards """
+        lon_standard_name = 'longitude'
+        lat_standard_name = 'latitude'
+        lon_var_name = lat_var_name = None
+        for var_name, var_val in self.variables.items():
+            if 'standard_name' in var_val.ncattrs():
+                if var_val.standard_name == lon_standard_name:
+                    lon_var_name = var_name
+                if var_val.standard_name == lat_standard_name:
+                    lat_var_name = var_name
+            if lon_var_name and lat_var_name:
+                break
+        return lon_var_name, lat_var_name
 
     def _get_variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc

@@ -234,7 +234,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
                 self.assertEqual(nc.projection_names, 
                 ('Polar_Stereographic_Grid', 'polar_stereographic'))
                 self.assertEqual(nc.spatial_dim_names, ('x', 'y'))
-                self.assertEqual(nc.lonlat_names, ('longitude', 'latitude'))
+                self.assertEqual(nc.lonlat_names, ('lon', 'lat'))
                 self.assertEqual(nc.time_name, 'time')
                 self.assertFalse(nc.is_lonlat_dim)
 
