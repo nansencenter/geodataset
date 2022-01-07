@@ -1,5 +1,6 @@
 import os
 from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
+from geodataset.projection_info import ProjectionInfo
 from geodataset.utils import InvalidDataset
 
 class CmemsMetIceChart(GeoDatasetRead):

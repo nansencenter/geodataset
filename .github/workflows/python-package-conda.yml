@@ -43,6 +43,7 @@ jobs:
         gdown https://drive.google.com/uc?id=1KGapeF6EG4h8gGPxNbkyRnRBYu3i7bdD -O /home/runner/work/test_data/
         gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O /home/runner/work/test_data/
         gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O /home/runner/work/test_data/
+        gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
         pytest
       env:
           TEST_DATA_DIR: /home/runner/work/test_data/
