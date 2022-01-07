@@ -2,7 +2,7 @@ import os
 import unittest
 import numpy as np
 
-class GeodatasetTestBase(unittest.TestCase):
+class BaseForTests(unittest.TestCase):
     ''' Base class for tests '''
     def setUp(self):
         # get test_forecast_dir from environment

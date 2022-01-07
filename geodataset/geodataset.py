@@ -7,45 +7,48 @@ import netcdftime
 from geodataset import get_logger
 from geodataset.projection_info import ProjectionInfo
 
-class GeoDataset(Dataset):
-    """ wrapper for netCDF4.Dataset for common input, output tasks """
-    
+class GeoDatasetBase(Dataset):
+    """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
+    lonlat_names = None
+    projection = None
+    projection_names = None
+    spatial_dim_names = None
+    time_name = None
+
     def __init__(self, *args, **kwargs):
         """
-        Initialise the object and add some default parameters which can be overridden by child classes.
-        Default parameters correspond to neXtSIM Moorings files.
-
-        Parameters:
-        -----------
-        args and kwargs for netCDF4.Dataset
+        Initialise the object using netCDF4.Dataset() and add logger
 
         Sets:
         -----
-        projection : ProjectionInfo
-        projection_names : tuple(str)
-            (grid_mapping, grid_mapping_name)
-            - grid_mapping is the name of the projection variable
-            - grid_mapping_name is the name of the projection variable
-        spatial_dim_names : tuple(str)
-            names of spatial dimensions
-        lonlat_names : tuple(str)
-            names of lon,lat variables
-        time_name : str
-            name of time variable
+        logger : logging.Logger
         """
-        Dataset.__init__(self, *args, **kwargs)
-        self.projection = ProjectionInfo()
-        self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
-        self.spatial_dim_names = ('x', 'y')
-        self.lonlat_names = ('longitude', 'latitude')
-        self.time_name = 'time'
-        self.variable_names = self._get_variable_names()
-        self.logger = get_logger(self.__class__)
+        super().__init__(*args, **kwargs)
+        self.logger = get_logger(type(self))
 
     def __setattr__(self, att, val):
         """ set object attributes (not netcdf attributes)
         This method overrides netCDF4.Dataset.__setattr__, which calls netCDF4.Dataset.setncattr """
         self.__dict__[att] = val
+
+    def convert_time_data(self, tdata):
+        """
+        Convert numeric time values to datetime.datetime objects.
+        Uses time units of variable with name self.time_name
+
+        Parameters:
+        -----------
+        time_num : numpy.ndarray(float)
+
+        Returns:
+        --------
+        time : numpy.ndarray(datetime.datetime)
+        """
+        atts = vars(self.variables[self.time_name])
+        cal = atts.get('calendar', 'standard')
+        units = atts['units']
+        datetimes = [netcdftime.num2date(t, units, calendar=cal) for t in tdata]
+        return np.array(datetimes).reshape(tdata.shape)
 
     @property
     def is_lonlat_dim(self):
@@ -56,18 +59,6 @@ class GeoDataset(Dataset):
             True if lon,lat are dimensions
         """
         return (self.lonlat_names[0] in self.dimensions)
-
-    @property
-    def datetimes(self):
-        """
-        Returns:
-        --------
-        datetimes : list(datetime.datetime)
-            all the time values converted to datetime objects
-        """
-        if self.time_name is None:
-            return []
-        return list(self.convert_time_data(self.variables[self.time_name][:]))
 
     def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e3):
         """
@@ -96,26 +87,72 @@ class GeoDataset(Dataset):
         y = self.projection.pyproj(lon[:,0], lat[:,0])[1]
         return [np.round(v/accuracy)*accuracy for v in [x, y]]
 
-    def convert_time_data(self, tdata):
+    @property
+    def datetimes(self):
         """
-        Convert numeric time values to datetime.datetime objects.
-        Uses time units of variable with name self.time_name
+        Returns:
+        --------
+        datetimes : list(datetime.datetime)
+            all the time values converted to datetime objects
+        """
+        if self.time_name is None:
+            return []
+        return list(self.convert_time_data(self.variables[self.time_name][:]))
+
+    def get_nearest_date(self, pivot):
+        """ Get date from the Dataset closest to the input date
+        
+        Parameters
+        ----------
+        pivot : datetime.datetime
+            searching date
+
+        Returns
+        -------
+        dto : datetime.datetime
+            value nearest date
+        time_index : int
+            index of the nearest date
+
+        """
+        dto = min(self.datetimes, key=lambda x: abs(x - pivot))
+        time_index = self.datetimes.index(dto)
+        return dto, time_index
+
+
+class GeoDatasetWrite(GeoDatasetBase):
+    """ Wrapper for netCDF4.Dataset for common ouput tasks """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialise the object and add some default parameters which can be overridden by child classes.
+        Default parameters correspond to neXtSIM Moorings files.
 
         Parameters:
         -----------
-        time_num : numpy.ndarray(float)
+        args and kwargs for netCDF4.Dataset
 
-        Returns:
-        --------
-        time : numpy.ndarray(datetime.datetime)
+        Sets:
+        -----
+        projection : ProjectionInfo
+        projection_names : tuple(str)
+            (grid_mapping, grid_mapping_name)
+            - grid_mapping is the name of the projection variable
+            - grid_mapping_name is the name of the projection variable
+        spatial_dim_names : tuple(str)
+            names of spatial dimensions
+        lonlat_names : tuple(str)
+            names of lon,lat variables
+        time_name : str
+            name of time variable
         """
-        atts = vars(self.variables[self.time_name])
-        cal = atts.get('calendar', 'standard')
-        units = atts['units']
-        datetimes = [netcdftime.num2date(t, units, calendar=cal) for t in tdata]
-        return np.array(datetimes).reshape(tdata.shape)
-
-    # writing
+        super().__init__(*args, **kwargs)
+        self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
+        self.spatial_dim_names = ('x', 'y')
+        self.time_name = 'time'
+        self.lonlat_names = ('longitude', 'latitude')
+        self.projection = ProjectionInfo()
+    
     def set_projection_variable(self):
         """
         set projection variable.
@@ -238,25 +275,42 @@ class GeoDataset(Dataset):
         dst_var.setncatts(ncatts)
         dst_var[:] = data
 
-    def get_nearest_date(self, pivot):
-        """ Get date from the Dataset closest to the input date
-        
-        Parameters
-        ----------
-        pivot : datetime.datetime
-            searching date
 
-        Returns
-        -------
-        dto : datetime.datetime
-            value nearest date
-        time_index : int
-            index of the nearest date
+class GeoDatasetRead(GeoDatasetBase):
+    """ Wrapper for netCDF4.Dataset for common input tasks """
 
+    def __init__(self, *args, **kwargs):
         """
-        dto        = min(self.datetimes, key=lambda x: abs(x - pivot))
-        time_index = self.datetimes.index(dto)
-        return dto, time_index
+        Initialise the object and add some default parameters which can be overridden by child classes.
+        Default parameters correspond to neXtSIM Moorings files.
+
+        Parameters:
+        -----------
+        args and kwargs for netCDF4.Dataset
+
+        Sets:
+        -----
+        projection : ProjectionInfo
+        projection_names : tuple(str)
+            (grid_mapping, grid_mapping_name)
+            - grid_mapping is the name of the projection variable
+            - grid_mapping_name is the name of the projection variable
+        spatial_dim_names : tuple(str)
+            names of spatial dimensions
+        lonlat_names : tuple(str)
+            names of lon,lat variables
+        time_name : str
+            name of time variable
+        """
+        super().__init__(*args, **kwargs)
+        # TODO:
+        # read these from input file or define in inhertited classes 
+        self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
+        self.spatial_dim_names = ('x', 'y')
+        self.time_name = 'time'
+        self.lonlat_names = ('longitude', 'latitude')
+        self.projection = ProjectionInfo()
+        self.variable_names = self._get_variable_names()
 
     def _get_variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
@@ -284,10 +338,12 @@ class GeoDataset(Dataset):
             array = array.take(indices=time_index, axis=time_axis)
         return array
 
+    def get_lonlat_arrays(self):
+        # if lon and lat are arrays
+        return [self.get_variable_array(name) for name in self.lonlat_names]
 
 
-
-class NetcdfArcMFC(GeoDataset):
+class NetcdfArcMFC(GeoDatasetWrite):
     """ wrapper for netCDF4.Dataset with info about ArcMFC products """
     
     def __init__(self, *args, **kwargs):

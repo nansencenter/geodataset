@@ -7,10 +7,10 @@ import datetime as dt
 
 from geodataset.projection_info import ProjectionInfo
 
-from geodataset.tests.geodataset_test_base import GeodatasetTestBase
+from geodataset.tests.base_for_tests import BaseForTests
 
 
-class ProjectionInfoTest(GeodatasetTestBase):
+class ProjectionInfoTest(BaseForTests):
     def test_default_projection(self):
 
         # map to x,y with mapx
