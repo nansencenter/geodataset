@@ -5,6 +5,7 @@ from netCDF4 import Dataset
 import netcdftime
 
 from geodataset import get_logger
+from geodataset.utils import InvalidDataset
 from geodataset.projection_info import ProjectionInfo
 
 class GeoDatasetBase(Dataset):
@@ -25,11 +26,17 @@ class GeoDatasetBase(Dataset):
         """
         super().__init__(*args, **kwargs)
         self.logger = get_logger(type(self))
+        self.filename = args[0]
+        self._check_input_file()
 
     def __setattr__(self, att, val):
         """ set object attributes (not netcdf attributes)
         This method overrides netCDF4.Dataset.__setattr__, which calls netCDF4.Dataset.setncattr """
         self.__dict__[att] = val
+
+    def _check_input_file(self):
+        """ Check if input file is valid for the current class or raise InvalidDataset """
+        pass
 
     def convert_time_data(self, tdata):
         """
@@ -324,8 +331,8 @@ class GeoDatasetRead(GeoDatasetBase):
                 if var_val.standard_name == lat_standard_name:
                     lat_var_name = var_name
             if lon_var_name and lat_var_name:
-                break
-        return lon_var_name, lat_var_name
+                return lon_var_name, lat_var_name
+        raise InvalidDataset
 
     def _get_variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
@@ -356,26 +363,3 @@ class GeoDatasetRead(GeoDatasetBase):
     def get_lonlat_arrays(self):
         # if lon and lat are arrays
         return [self.get_variable_array(name) for name in self.lonlat_names]
-
-
-class NetcdfArcMFC(GeoDatasetWrite):
-    """ wrapper for netCDF4.Dataset with info about ArcMFC products """
-    
-    def __init__(self, *args, **kwargs):
-        """
-        init the object and adds some default parameters which can be overridden by child classes
-
-        Parameters:
-        -----------
-        args and kwargs for netCDF4.Dataset
-
-        Sets:
-        -----
-        projection : ProjectionInfo
-        projection_names : tuple(str)
-
-        Other attributes are defaults for the parent class NetcdfIO
-        """
-        super().__init__(*args, **kwargs)
-        self.projection_names = ('stereographic', 'polar_stereographic')
-        self.projection = ProjectionInfo.topaz_np_stere()

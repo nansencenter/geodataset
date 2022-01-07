@@ -1,3 +1,4 @@
+import glob
 import os
 import numpy as np
 import unittest
@@ -5,8 +6,9 @@ import datetime as dt
 from mock import patch, call, Mock, MagicMock, DEFAULT
 import subprocess
 
-from geodataset.tests.base_for_tests import BaseForTests
 from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead, Dataset, ProjectionInfo
+from geodataset.utils import InvalidDataset
+from geodataset.tests.base_for_tests import BaseForTests
 
 class GeodatasetTestBase(BaseForTests):
     def setUp(self):
@@ -294,6 +296,24 @@ class GeoDatasetReadTest(GeodatasetTestBase):
 
         self.assertEqual(lon_name, 'lon')
         self.assertEqual(lat_name, 'lat')
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            variables=DEFAULT,
+            )
+    def test_get_lonlat_names_raises(self, **kwargs):
+        ''' test f4 with _FillValue defined '''
+        variables = {
+            'lon': Mock(),
+        }
+        variables['lon'].ncattrs.return_value = ['standard_name', 'a', 'b']
+        variables['lon'].standard_name = 'longitude'
+        
+        with GeoDatasetRead() as ds:
+            ds.variables = variables
+            with self.assertRaises(InvalidDataset):
+                lon_name, lat_name = ds._get_lonlat_names()
 
 if __name__ == "__main__":
     unittest.main()

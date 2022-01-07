@@ -74,3 +74,5 @@ def get_logger(cls):
     """
     logger = logging.getLogger(get_module_name(cls))
     logger.addHandler(logging.NullHandler())
+
+class InvalidDataset(Exception): pass
