@@ -4,7 +4,7 @@ import numpy as np
 
 from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
 from geodataset.projection_info import ProjectionInfo
-from geodataset.utils import InvalidDataset
+from geodataset.utils import InvalidDatasetError
 
 class CustomDatasetRead(GeoDatasetRead):
     _filename_prefix = None
@@ -13,7 +13,7 @@ class CustomDatasetRead(GeoDatasetRead):
         n = os.path.basename(self.filename)
         if not (n.startswith(self._filename_prefix) and 
                 n.endswith(self._filename_suffix)):
-            raise InvalidDataset
+            raise InvalidDatasetError
 
 
 class CmemsMetIceChart(CustomDatasetRead):
@@ -51,6 +51,17 @@ class Etopo(CustomDatasetRead):
     def get_lonlat_arrays(self):
         lon, lat = super().get_lonlat_arrays()
         return np.meshgrid(lon, lat)
+
+
+class SmosIceThickness(CustomDatasetRead):
+    _filename_prefix = 'SMOS_Icethickness_v3.2_north'
+
+    def _get_area_definition(self):
+        # TODO:
+        # read EXTENT from given X, Y variables
+        # read or set units
+        # set projection
+        # set area definition
 
 
 class NetcdfArcMFC(GeoDatasetWrite):

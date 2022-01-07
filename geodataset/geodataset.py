@@ -359,7 +359,7 @@ class GeoDatasetRead(GeoDatasetBase):
     def _get_area_definition(self):
         try:
             area, extra = load_cf_area(self.filename)
-        except [MissingDimensionsError, CRSError, KeyError, ValueError] as e:
+        except (MissingDimensionsError, CRSError, KeyError, ValueError) as e:
             raise InvalidDatasetError
         
     def get_variable_array(self, var_name, time_index=0):

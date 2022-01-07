@@ -7,7 +7,7 @@ from mock import patch, call, Mock, MagicMock, DEFAULT
 import subprocess
 
 from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead, Dataset, ProjectionInfo
-from geodataset.utils import InvalidDataset
+from geodataset.utils import InvalidDatasetError
 from geodataset.tests.base_for_tests import BaseForTests
 
 class GeodatasetTestBase(BaseForTests):
@@ -312,7 +312,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         
         with GeoDatasetRead() as ds:
             ds.variables = variables
-            with self.assertRaises(InvalidDataset):
+            with self.assertRaises(InvalidDatasetError):
                 lon_name, lat_name = ds._get_lonlat_names()
 
 if __name__ == "__main__":
