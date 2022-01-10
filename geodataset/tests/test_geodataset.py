@@ -4,7 +4,10 @@ import numpy as np
 import unittest
 import datetime as dt
 from mock import patch, call, Mock, MagicMock, DEFAULT
+import pyproj
+from pyresample.utils import load_cf_area
 import subprocess
+
 
 from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead, Dataset, ProjectionInfo
 from geodataset.utils import InvalidDatasetError
@@ -232,12 +235,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
                 self.assertEqual(ds.ncattrs(), nc.ncattrs())
                 self.assertEqual(list(ds.dimensions), list(nc.dimensions))
                 self.assertEqual(list(ds.variables), list(nc.variables))
-                self.assertEqual(vars(nc.projection), vars(ProjectionInfo()))
-                self.assertEqual(nc.projection_names, 
-                ('Polar_Stereographic_Grid', 'polar_stereographic'))
-                self.assertEqual(nc.spatial_dim_names, ('x', 'y'))
                 self.assertEqual(nc.lonlat_names, ('lon', 'lat'))
-                self.assertEqual(nc.time_name, 'time')
                 self.assertFalse(nc.is_lonlat_dim)
 
     def test_method_get_nearest_date(self):
@@ -253,7 +251,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
         netcdf file) than the 2010."""
         with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
-            var_names = ds._get_variable_names()
+            var_names = ds.variable_names
             self.assertEqual(var_names, 
             ['lat', 'lon', 'dt0', 'lon1', 'lat1', 'dt1',
             'dX', 'dY', 'status_flag', 'uncert_dX_and_dY'])
@@ -292,7 +290,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         
         with GeoDatasetRead() as ds:
             ds.variables = variables
-            lon_name, lat_name = ds._get_lonlat_names()
+            lon_name, lat_name = ds.lonlat_names
 
         self.assertEqual(lon_name, 'lon')
         self.assertEqual(lat_name, 'lat')
@@ -313,7 +311,23 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         with GeoDatasetRead() as ds:
             ds.variables = variables
             with self.assertRaises(InvalidDatasetError):
-                lon_name, lat_name = ds._get_lonlat_names()
+                lon_name, lat_name = ds.lonlat_names
+
+    @patch('geodataset.geodataset.load_cf_area')
+    def test_area_def_cf_info(self, mock_lca):
+        with GeoDatasetRead(self.osisaf_filename) as ds:
+            a = ds._area_def_cf_info
+            b = ds._area_def_cf_info
+            mock_lca.assert_called_once_with(ds.filename)
+
+    def test_grid_mapping_variable(self):
+        with GeoDatasetRead(self.osisaf_filename) as ds:
+            self.assertEqual(ds.grid_mapping_variable, 'Polar_Stereographic_Grid')
+            
+    def test_projection(self):
+        p = pyproj.Proj(load_cf_area(self.osisaf_filename)[0].crs)
+        with GeoDatasetRead(self.osisaf_filename) as ds:
+            self.assertEqual(ds.projection, p)
 
 if __name__ == "__main__":
     unittest.main()

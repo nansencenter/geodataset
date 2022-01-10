@@ -1,10 +1,28 @@
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
-from geodataset.custom_geodataset import NetcdfArcMFC, CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc, Etopo
+from geodataset.custom_geodataset import (
+    CmemsMetIceChart, 
+    Dist2Coast,
+    Etopo,
+    JaxaAmsr2IceConc, 
+    NerscDeformation, 
+    NerscIceType, 
+)
+
+custom_read_classes = [
+    CmemsMetIceChart, 
+    Dist2Coast,
+    Etopo,
+    JaxaAmsr2IceConc, 
+    NerscDeformation, 
+    NerscIceType,
+    # always last:
+    GeoDatasetRead,
+]
 
 def open_netcdf(file_address):
-    classes = [CmemsMetIceChart, NerscDeformation, NerscIceType, JaxaAmsr2IceConc, Etopo, GeoDatasetRead]
-    for class_ in classes:
+
+    for class_ in custom_read_classes:
         try:
             obj = class_(file_address)
         except InvalidDatasetError:

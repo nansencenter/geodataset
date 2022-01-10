@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pyproj
 
 from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
 from geodataset.projection_info import ProjectionInfo
@@ -16,17 +17,24 @@ class CustomDatasetRead(GeoDatasetRead):
             raise InvalidDatasetError
 
 
+class Dist2Coast(CustomDatasetRead):
+    _filename_prefix = 'dist2coast_4deg.nc'
+    lonlat_names = 'lon', 'lat'
+    def get_lonlat_arrays(self):
+        return np.meshgrid(self['lon'][:], self['lat'][:])
+
+
 class CmemsMetIceChart(CustomDatasetRead):
     _filename_prefix = 'ice_conc_svalbard_'
-
-    def _get_lonlat_names(self):
-        return 'lon', 'lat'
+    lonlat_names = 'lon', 'lat'
 
 
 class NerscSarProducts(CustomDatasetRead):
-    pass
-    def _get_lonlat_names(self):
-        return 'absent', 'absent'
+    lonlat_names = 'absent', 'absent'
+    def get_lonlat_arrays(self):
+        x_grd, y_grd = np.meshgrid(self['x'][:], self['y'][:])
+        return self.projection.transform(
+            x_grd, y_grd, direction=pyproj.enums.TransformDirection.INVERSE)
     
 
 class NerscDeformation(NerscSarProducts):
@@ -40,9 +48,7 @@ class NerscIceType(NerscSarProducts):
 class JaxaAmsr2IceConc(CustomDatasetRead):
     _filename_prefix = 'Arc_'
     _filename_suffix = '_res3.125_pyres.nc'
-    
-    def _get_lonlat_names(self):
-        return 'longitude', 'latitude'
+    lonlat_names = 'longitude', 'latitude'
 
 
 class Etopo(CustomDatasetRead):
@@ -62,6 +68,7 @@ class SmosIceThickness(CustomDatasetRead):
         # read or set units
         # set projection
         # set area definition
+        pass
 
 
 class NetcdfArcMFC(GeoDatasetWrite):

@@ -1,4 +1,5 @@
 import datetime as dt
+from functools import lru_cache
 
 from netCDF4 import Dataset
 import netcdftime
@@ -15,9 +16,7 @@ class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
     lonlat_names = None
     projection = None
-    projection_names = None
-    spatial_dim_names = None
-    time_name = None
+    time_name = 'time'
 
     def __init__(self, *args, **kwargs):
         """
@@ -289,41 +288,9 @@ class GeoDatasetWrite(GeoDatasetBase):
 class GeoDatasetRead(GeoDatasetBase):
     """ Wrapper for netCDF4.Dataset for common input tasks """
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialise the object and add some default parameters which can be overridden by child classes.
-        Default parameters correspond to neXtSIM Moorings files.
-
-        Parameters:
-        -----------
-        args and kwargs for netCDF4.Dataset
-
-        Sets:
-        -----
-        projection : ProjectionInfo
-        projection_names : tuple(str)
-            (grid_mapping, grid_mapping_name)
-            - grid_mapping is the name of the projection variable
-            - grid_mapping_name is the name of the projection variable
-        spatial_dim_names : tuple(str)
-            names of spatial dimensions
-        lonlat_names : tuple(str)
-            names of lon,lat variables
-        time_name : str
-            name of time variable
-        """
-        super().__init__(*args, **kwargs)
-        # TODO:
-        # read these from input file or define in inhertited classes 
-        self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
-        self.spatial_dim_names = ('x', 'y')
-        self.time_name = 'time'
-        self.projection = ProjectionInfo()
-        self.lonlat_names = self._get_lonlat_names()
-        self.variable_names = self._get_variable_names()
-        self.area_definition = self._get_area_definition()
-
-    def _get_lonlat_names(self):
+    @property
+    @lru_cache(1)
+    def lonlat_names(self):
         """ Get names of latitude longitude following CF and ACDD standards """
         lon_standard_name = 'longitude'
         lat_standard_name = 'latitude'
@@ -338,7 +305,9 @@ class GeoDatasetRead(GeoDatasetBase):
                 return lon_var_name, lat_var_name
         raise InvalidDatasetError
 
-    def _get_variable_names(self):
+    @property
+    @lru_cache(1)
+    def variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
         
         Returns
@@ -349,19 +318,35 @@ class GeoDatasetRead(GeoDatasetBase):
         """
         bad_names = list(self.dimensions.keys())
         var_names = list(self.variables.keys())
-        bad_names.extend(list(self.projection_names))
+        bad_names.append(self.grid_mapping_variable)
         bad_names += ['time_bnds']
         for bad_name in bad_names:
             if bad_name in var_names:
                 var_names.remove(bad_name)
         return var_names
-    
-    def _get_area_definition(self):
+
+    @property
+    def projection(self):
+        return pyproj.Proj(self.area_definition.crs)
+
+    @property
+    def area_definition(self):
+        return self._area_def_cf_info[0]
+
+    @property
+    def grid_mapping_variable(self):
+        return self._area_def_cf_info[1]['grid_mapping_variable']
+
+    @property
+    @lru_cache(1)
+    def _area_def_cf_info(self):
         try:
-            area, extra = load_cf_area(self.filename)
+            area_def_cf_info = load_cf_area(self.filename)
         except (MissingDimensionsError, CRSError, KeyError, ValueError) as e:
             raise InvalidDatasetError
-        
+        else:
+            return area_def_cf_info
+
     def get_variable_array(self, var_name, time_index=0):
         ds_var = self[var_name]
         array = ds_var[:]
