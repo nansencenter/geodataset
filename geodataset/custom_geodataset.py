@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import pyproj
@@ -8,25 +9,50 @@ from geodataset.projection_info import ProjectionInfo
 from geodataset.utils import InvalidDatasetError
 
 class CustomDatasetRead(GeoDatasetRead):
-    _filename_prefix = None
-    _filename_suffix = '.nc'
+    pattern = None
     def _check_input_file(self):
         n = os.path.basename(self.filename)
-        if not (n.startswith(self._filename_prefix) and 
-                n.endswith(self._filename_suffix)):
+        if not self.pattern.match(n):
             raise InvalidDatasetError
 
 
+class CmemsMetIceChart(CustomDatasetRead):
+    pattern = re.compile(r'ice_conc_svalbard_\d{12}.nc')
+    lonlat_names = 'lon', 'lat'
+    grid_mapping_variable = 'crs'
+
+    @property
+    def projection(self):
+        return pyproj.Proj(self.variables['crs'].proj4_string)
+
+
 class Dist2Coast(CustomDatasetRead):
-    _filename_prefix = 'dist2coast_4deg.nc'
+    pattern = re.compile(r'dist2coast_4deg.nc')
     lonlat_names = 'lon', 'lat'
     def get_lonlat_arrays(self):
         return np.meshgrid(self['lon'][:], self['lat'][:])
 
 
-class CmemsMetIceChart(CustomDatasetRead):
-    _filename_prefix = 'ice_conc_svalbard_'
-    lonlat_names = 'lon', 'lat'
+class Etopo(CustomDatasetRead):
+    pattern = re.compile(r'ETOPO_Arctic_\d{1,2}arcmin.nc')
+
+    def get_lonlat_arrays(self):
+        lon, lat = super().get_lonlat_arrays()
+        return np.meshgrid(lon, lat)
+
+
+class JaxaAmsr2IceConc(CustomDatasetRead):
+    pattern = re.compile(r'Arc_\d{8}_res3.125_pyres.nc')
+    _filename_suffix = '_res3.125_pyres.nc'
+    lonlat_names = 'longitude', 'latitude'
+    projection = pyproj.Proj(3411)
+
+
+class MooringsNextsim(CustomDatasetRead):
+    _filename_prefix = 'Moorings'
+    pattern = re.compile(r'Moorings.*.nc')
+    projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=-45 "
+         "+x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs")
 
 
 class NerscSarProducts(CustomDatasetRead):
@@ -38,37 +64,27 @@ class NerscSarProducts(CustomDatasetRead):
     
 
 class NerscDeformation(NerscSarProducts):
-    _filename_prefix = 'arctic_2km_deformation_'
+    pattern = re.compile(r'arctic_2km_deformation_\d{8}T\d{6}.nc')
 
 
 class NerscIceType(NerscSarProducts):
-    _filename_prefix = 'arctic_2km_icetype_'
+    pattern = re.compile(r'arctic_2km_icetype_\d{8}T\d{6}.nc')
 
 
-class JaxaAmsr2IceConc(CustomDatasetRead):
-    _filename_prefix = 'Arc_'
-    _filename_suffix = '_res3.125_pyres.nc'
-    lonlat_names = 'longitude', 'latitude'
-
-
-class Etopo(CustomDatasetRead):
-    _filename_prefix = 'ETOPO_Arctic_'
-
-    def get_lonlat_arrays(self):
-        lon, lat = super().get_lonlat_arrays()
-        return np.meshgrid(lon, lat)
+class OsisafDriftersNextsim(CustomDatasetRead):
+    pattern = re.compile(r'OSISAF_Drifters_.*.nc')
+    projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
+     " +a=6378273 +b=6356889.44891 ")
 
 
 class SmosIceThickness(CustomDatasetRead):
-    _filename_prefix = 'SMOS_Icethickness_v3.2_north'
+    pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
+    projection = pyproj.Proj(3411)
 
-    def _get_area_definition(self):
-        # TODO:
-        # read EXTENT from given X, Y variables
-        # read or set units
-        # set projection
-        # set area definition
-        pass
+
+class Topaz4Forecast(CustomDatasetRead):
+    pattern = re.compile(r'\d{8}_dm-metno-MODEL-topaz4-ARC-b\d{8}-fv02.0.nc')
+    projection = pyproj.Proj("+proj=stere +lat_0=90 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
 
 
 class NetcdfArcMFC(GeoDatasetWrite):

@@ -5,8 +5,12 @@ from geodataset.custom_geodataset import (
     Dist2Coast,
     Etopo,
     JaxaAmsr2IceConc, 
+    MooringsNextsim,
     NerscDeformation, 
     NerscIceType, 
+    OsisafDriftersNextsim,
+    SmosIceThickness,
+    Topaz4Forecast,
 )
 
 custom_read_classes = [
@@ -14,8 +18,12 @@ custom_read_classes = [
     Dist2Coast,
     Etopo,
     JaxaAmsr2IceConc, 
+    MooringsNextsim,
     NerscDeformation, 
     NerscIceType,
+    OsisafDriftersNextsim,
+    SmosIceThickness,
+    Topaz4Forecast,
     # always last:
     GeoDatasetRead,
 ]

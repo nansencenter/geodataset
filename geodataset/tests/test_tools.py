@@ -2,6 +2,8 @@ import glob
 import os
 import unittest
 
+import pyproj
+
 from geodataset.tools import open_netcdf
 
 from geodataset.tests.base_for_tests import BaseForTests
@@ -32,6 +34,11 @@ class ToolsTests(BaseForTests):
                 self.assertGreaterEqual(lat.min(), -90)
                 self.assertLessEqual(lat.max(), 90)
 
+    def test_projection(self):
+        for nc_file in self.nc_files:
+            with self.subTest(nc_file=nc_file):
+                ds = open_netcdf(nc_file)
+                self.assertIsInstance(ds.projection, pyproj.Proj)
 
 if __name__ == "__main__":
     unittest.main(failfast=True)
