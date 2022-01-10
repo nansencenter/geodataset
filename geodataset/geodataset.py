@@ -359,21 +359,34 @@ class GeoDatasetRead(GeoDatasetBase):
         # if lon and lat are arrays
         return [self.get_variable_array(name) for name in self.lonlat_names]
 
-    def get_area_euclidean(self, pyproj_map):
+    def get_area_euclidean(self, mapping):
         """
         Calculates element area from netcdf file
         Assumes regular grid in the given projection
 
         Parameters:
         -----------
-        pyproj_map : pyproj.Proj
+        mapping : pyproj.Proj
 
         Returns:
         --------
         * area (float)
         """
         lon, lat = self.get_lonlat_arrays()
-        x, y = pyproj_map(lon, lat)
+        x, y = mapping(lon, lat)
         dy = np.max([np.abs(np.mean(y[:, 2]-y[:, 1])), np.abs(np.mean(y[1, :]-y[0, :]))])
         dx = np.max([np.abs(np.mean(x[:, 2]-x[:, 1])), np.abs(np.mean(x[1, :]-x[0, :]))])
         return np.abs(dx*dy)
+
+    def get_bbox(self, mapping):
+        """ Get bounding box (extent)
+        Parameters:
+        * mapping: pyproj mapping
+
+        Returns:
+        * bbox = [xmin, xmax, ymin, ymax], where x,y are coordinates specified by mapping
+        """
+
+        lon, lat = self.get_lonlat_arrays()
+        x, y = mapping(lon, lat)
+        return [x.min(), x.max(), y.min(), y.max()]

@@ -334,17 +334,34 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             __exit__=MagicMock(return_value=None),
             get_lonlat_arrays=DEFAULT,
             )
-    def test_get_lonlat_names_raises(self, **kwargs):
+    def test_get_area_euclidean(self, **kwargs):
         ''' test f4 with _FillValue defined '''
         p = pyproj.Proj(3411)
-
-        kwargs['get_lonlat_arrays'].return_value = (
+        GeoDatasetRead.get_lonlat_arrays.return_value = (
             np.array([[1,2,3],[1,2,3],[1,2,3]]),
             np.array([[1,1,1],[2,2,2],[3,3,3]]))
 
         with GeoDatasetRead() as ds:
             area = ds.get_area_euclidean(p)
             self.assertAlmostEqual(area, 23354252971.32609)
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            get_lonlat_arrays=DEFAULT,
+            )
+    def test_get_bbox(self, **kwargs):
+        ''' test f4 with _FillValue defined '''
+        p = pyproj.Proj(3411)
+        GeoDatasetRead.get_lonlat_arrays.return_value = (
+            np.array([[1,2,3],[1,2,3],[1,2,3]]),
+            np.array([[1,1,1],[2,2,2],[3,3,3]]))
+
+        with GeoDatasetRead() as ds:
+            bbox = ds.get_bbox(p)
+            self.assertAlmostEqual(bbox,
+            [8420199.606917838, 9005961.652806347, 
+            -8418368.037664523, -7832478.150085783])
 
 if __name__ == "__main__":
     unittest.main()
