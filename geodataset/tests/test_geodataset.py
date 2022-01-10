@@ -1,13 +1,13 @@
-import glob
-import os
-import numpy as np
-import unittest
 import datetime as dt
+import glob
 from mock import patch, call, Mock, MagicMock, DEFAULT
+import os
+import subprocess
+import unittest
+
+import numpy as np
 import pyproj
 from pyresample.utils import load_cf_area
-import subprocess
-
 
 from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead, Dataset, ProjectionInfo
 from geodataset.utils import InvalidDatasetError
@@ -239,8 +239,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
                 self.assertFalse(nc.is_lonlat_dim)
 
     def test_method_get_nearest_date(self):
-        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
-        netcdf file) than the 2010."""
         with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
             #ds.datetimes.append(dt.datetime(2000, 1, 1, 12, 0))
             ans, ans_index = ds.get_nearest_date(dt.datetime(2020, 1, 1, 12, 0))
@@ -248,8 +246,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             self.assertEqual(ans_index, 0)
 
     def test_get_var_names(self):
-        """Test the ability of finding the nearest date to a specific date. 2007 is near to 2006 (in
-        netcdf file) than the 2010."""
         with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
             var_names = ds.variable_names
             self.assertEqual(var_names, 
@@ -275,7 +271,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             variables=DEFAULT,
             )
     def test_get_lonlat_names(self, **kwargs):
-        ''' test f4 with _FillValue defined '''
         variables = {
             'lon': Mock(),
             'lat': Mock(),
@@ -301,7 +296,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             variables=DEFAULT,
             )
     def test_get_lonlat_names_raises(self, **kwargs):
-        ''' test f4 with _FillValue defined '''
         variables = {
             'lon': Mock(),
         }
@@ -335,7 +329,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             get_lonlat_arrays=DEFAULT,
             )
     def test_get_area_euclidean(self, **kwargs):
-        ''' test f4 with _FillValue defined '''
         p = pyproj.Proj(3411)
         GeoDatasetRead.get_lonlat_arrays.return_value = (
             np.array([[1,2,3],[1,2,3],[1,2,3]]),
@@ -343,7 +336,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
 
         with GeoDatasetRead() as ds:
             area = ds.get_area_euclidean(p)
-            self.assertAlmostEqual(area, 23354252971.32609)
+            self.assertAlmostEqual(area, 23354252971.32609, 1)
 
     @patch.multiple(GeoDatasetRead,
             __init__=MagicMock(return_value=None),
@@ -351,7 +344,6 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             get_lonlat_arrays=DEFAULT,
             )
     def test_get_bbox(self, **kwargs):
-        ''' test f4 with _FillValue defined '''
         p = pyproj.Proj(3411)
         GeoDatasetRead.get_lonlat_arrays.return_value = (
             np.array([[1,2,3],[1,2,3],[1,2,3]]),
@@ -359,9 +351,10 @@ class GeoDatasetReadTest(GeodatasetTestBase):
 
         with GeoDatasetRead() as ds:
             bbox = ds.get_bbox(p)
-            self.assertAlmostEqual(bbox,
+            np.testing.assert_almost_equal(bbox,
             [8420199.606917838, 9005961.652806347, 
-            -8418368.037664523, -7832478.150085783])
+            -8418368.037664523, -7832478.150085783],
+            1)
 
 if __name__ == "__main__":
     unittest.main()

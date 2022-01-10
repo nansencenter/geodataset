@@ -41,4 +41,4 @@ class ToolsTests(BaseForTests):
                 self.assertIsInstance(ds.projection, pyproj.Proj)
 
 if __name__ == "__main__":
-    unittest.main(failfast=True)
+    unittest.main()

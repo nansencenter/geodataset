@@ -291,7 +291,14 @@ class GeoDatasetRead(GeoDatasetBase):
     @property
     @lru_cache(1)
     def lonlat_names(self):
-        """ Get names of latitude longitude following CF and ACDD standards """
+        """ Get names of latitude longitude following CF and ACDD standards 
+        
+        Returns
+        -------
+        lon_var_name : str
+        lat_var_name : str
+        
+        """
         lon_standard_name = 'longitude'
         lat_standard_name = 'latitude'
         lon_var_name = lat_var_name = None
@@ -327,19 +334,48 @@ class GeoDatasetRead(GeoDatasetBase):
 
     @property
     def projection(self):
+        """ Read projection of the dataset from self.area_definition
+        
+        Returns
+        -------
+        projection : pyproj.Proj
+
+        """
         return pyproj.Proj(self.area_definition.crs)
 
     @property
     def area_definition(self):
+        """ Read area definition of the dataset from self._area_def_cf_info
+        
+        Returns
+        -------
+        area_definition : pyresample.AreaDefinition
+
+        """
         return self._area_def_cf_info[0]
 
     @property
     def grid_mapping_variable(self):
+        """ Read name of the grid mapping variable from self._area_def_cf_info
+        
+        Returns
+        -------
+        grid_mapping_variable : str
+
+        """
         return self._area_def_cf_info[1]['grid_mapping_variable']
 
     @property
     @lru_cache(1)
     def _area_def_cf_info(self):
+        """ Read area definition and grid mapping information using pyresample.load_cf_area
+        
+        Returns
+        -------
+        area_def_cf_info : tuple
+            area_definition and grid_mapping_information
+
+        """
         try:
             area_def_cf_info = load_cf_area(self.filename)
         except (MissingDimensionsError, CRSError, KeyError, ValueError) as e:
@@ -348,6 +384,22 @@ class GeoDatasetRead(GeoDatasetBase):
             return area_def_cf_info
 
     def get_variable_array(self, var_name, time_index=0):
+        """ Get array with values from a given variable. 
+        If variable has time dimension, time_index is used.
+        
+        Parameters
+        ----------
+        var_name : str
+            name of variable
+        time_index: int
+            from which time layer to read data
+
+        Returns
+        -------
+        array : 2D numpy.array
+            data from variable from time_index
+
+        """
         ds_var = self[var_name]
         array = ds_var[:]
         if 'time' in ds_var.dimensions:
