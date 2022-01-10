@@ -329,5 +329,22 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         with GeoDatasetRead(self.osisaf_filename) as ds:
             self.assertEqual(ds.projection, p)
 
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            get_lonlat_arrays=DEFAULT,
+            )
+    def test_get_lonlat_names_raises(self, **kwargs):
+        ''' test f4 with _FillValue defined '''
+        p = pyproj.Proj(3411)
+
+        kwargs['get_lonlat_arrays'].return_value = (
+            np.array([[1,2,3],[1,2,3],[1,2,3]]),
+            np.array([[1,1,1],[2,2,2],[3,3,3]]))
+
+        with GeoDatasetRead() as ds:
+            area = ds.get_area_euclidean(p)
+            self.assertAlmostEqual(area, 23354252971.32609)
+
 if __name__ == "__main__":
     unittest.main()
