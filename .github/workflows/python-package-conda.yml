@@ -21,7 +21,7 @@ jobs:
       id: cache
     - name: Install dependencies
       run: |
-        $CONDA/bin/conda env update --file environment_testing.yml --name base
+        $CONDA/bin/conda env update --file environment.yml --name base
         $CONDA/bin/pip install netcdftime pytest gdown
       if: steps.cache.outputs.cache-hit != 'true'
     - name: Download test data

@@ -2,33 +2,18 @@ name: geodataset
 channels:
   - conda-forge
 dependencies:
-  - gdal
   - cartopy
-  - pykdtree
   - pip
+  - pykdtree
   - pip:
     - cmocean
     - cython
-    - ipdb
-    - ipython
-    - jupyter
     - matplotlib
     - mock
     - netcdf4
-    - nose
-    - notebook
     - numpy
-    - pandas
-    - paramiko
-    - pillow
-    - pygrib
     - pyproj
-    - pyshp
-    - pyyaml
-    - rtree
-    - scikit-image
-    - scikit-learn
-    - scipy
-    - shapely
-    - xarray
     - pyresample
+    - pyyaml
+    - scipy
+    - xarray
