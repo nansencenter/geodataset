@@ -1,9 +1,12 @@
 name: Python Package using Conda
 
-on: [push]
+on:
+  push:
+  release:
+    types: [released]
 
 jobs:
-  run-tests:
+  test-build-publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -42,4 +45,14 @@ jobs:
         $CONDA/bin/pytest
       env:
           TEST_DATA_DIR: /home/runner/work/test_data/
-
+    - name: Build Python package
+      if: github.event_name == 'release'
+      run: >
+        GEODATASET_RELEASE="${GITHUB_REF#refs/tags/}"
+        python setup.py sdist bdist_wheel
+    - name: Publish Python package
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository_url: https://upload.pypi.org/geodataset/
+        password: ${{ secrets.PYPI_TOKEN }}
