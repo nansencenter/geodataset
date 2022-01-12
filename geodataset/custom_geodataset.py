@@ -50,8 +50,17 @@ class JaxaAmsr2IceConc(CustomDatasetRead):
 class MooringsNextsim(CustomDatasetRead):
     _filename_prefix = 'Moorings'
     pattern = re.compile(r'Moorings.*.nc')
-    projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=-45 "
-         "+x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs")
+    projection = pyproj.Proj(
+        '+proj=stere +a=6378273.0 +b=6356889.448910593 '
+        '+lon_0=-45.0 +lat_0=90.0 +lat_ts=60.0')
+
+
+class MooringsArcMfc(CustomDatasetRead):
+    _filename_prefix = 'Moorings'
+    pattern = re.compile(r'Moorings.*.nc')
+    projection = pyproj.Proj(
+        '+proj=stere +a=6378273.0 +b=6378273.0 '
+        '+lon_0=-45.0 +lat_0=90.0 +lat_ts=90.0')
 
 
 class NerscSarProducts(CustomDatasetRead):

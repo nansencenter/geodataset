@@ -424,3 +424,16 @@ class GeoDatasetRead(GeoDatasetBase):
         x = self.projection(lon[0,:], lat[0,:])[0]
         y = self.projection(lon[:,0], lat[:,0])[1]
         return [np.round(v/accuracy)*accuracy for v in [x, y]]
+
+    def get_proj_info_kwargs(self):
+        g = self.projection.crs.get_geod()
+        d = self.projection.crs.to_dict()
+        kwargs = dict(
+            proj = d['proj'],
+            lat_0 = d['lat_0'],
+            lat_ts = d['lat_ts'],
+            lon_0 = d['lon_0'],
+            a = g.a,
+            ecc = g.es,
+        )
+        return kwargs

@@ -374,5 +374,18 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             1)
         print('OK')
 
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            projection=DEFAULT,
+            )
+    def test_get_proj_info_kwargs(self, **kwargs):
+        GeoDatasetRead.projection = pyproj.Proj(3411)
+        with GeoDatasetRead() as ds:
+            kwargs = ds.get_proj_info_kwargs()
+        self.assertEqual(kwargs,
+        {'proj': 'stere', 'lat_0': 90, 'lat_ts': 70, 'lon_0': -45, 
+        'a': 6378273.0, 'ecc': 0.0066938828637783665})
+
 if __name__ == "__main__":
     unittest.main()
