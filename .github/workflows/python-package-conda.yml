@@ -10,23 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Cache
-      uses: actions/cache@v2
-      env:
-        CACHE_NUMBER: 2
-      with:
-        path: |
-          /usr/share/miniconda
-          /home/runner/work/test_data
-        key:
-          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-          hashFiles('environment_testing.yml') }}
-      id: cache
     - name: Install dependencies
       run: |
         $CONDA/bin/conda env update --file environment.yml --name base
-        $CONDA/bin/pip install netcdftime pytest gdown
-      if: steps.cache.outputs.cache-hit != 'true'
     - name: Download test data
       run: |
         mkdir -p /home/runner/work/test_data
@@ -39,7 +25,6 @@ jobs:
         $CONDA/bin/gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O /home/runner/work/test_data/
         $CONDA/bin/gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O /home/runner/work/test_data/
         $CONDA/bin/gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
-      if: steps.cache.outputs.cache-hit != 'true'
     - name: Test with pytest
       run: |
         $CONDA/bin/pytest
@@ -47,7 +32,7 @@ jobs:
           TEST_DATA_DIR: /home/runner/work/test_data/
     - name: Build Python package
       if: github.event_name == 'release'
-      run: >
+      run: |
         GEODATASET_RELEASE="${GITHUB_REF#refs/tags/}"
         python setup.py sdist bdist_wheel
     - name: Publish Python package

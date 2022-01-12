@@ -3,17 +3,20 @@ channels:
   - conda-forge
 dependencies:
   - cartopy
+  - cython
   - pip
   - pykdtree
   - pip:
     - cmocean
-    - cython
+    - gdown
     - matplotlib
     - mock
     - netcdf4
+    - netcdftime
     - numpy
     - pyproj
     - pyresample
+    - pytest
     - pyyaml
     - scipy
     - xarray
