@@ -5,7 +5,6 @@ import numpy as np
 import pyproj
 
 from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
-from geodataset.projection_info import ProjectionInfo
 from geodataset.utils import InvalidDatasetError
 
 class CustomDatasetRead(GeoDatasetRead):
@@ -89,23 +88,7 @@ class Topaz4Forecast(CustomDatasetRead):
 
 class NetcdfArcMFC(GeoDatasetWrite):
     """ wrapper for netCDF4.Dataset with info about ArcMFC products """
-    
-    def __init__(self, *args, **kwargs):
-        """
-        init the object and adds some default parameters which can be overridden by child classes
-
-        Parameters:
-        -----------
-        args and kwargs for netCDF4.Dataset
-
-        Sets:
-        -----
-        projection : ProjectionInfo
-        projection_names : tuple(str)
-
-        Other attributes are defaults for the parent class NetcdfIO
-        """
-        super().__init__(*args, **kwargs)
-        self.projection_names = ('stereographic', 'polar_stereographic')
-        self.projection = ProjectionInfo.topaz_np_stere()
-
+    grid_mapping_name = 'stereographic'
+    projection = pyproj.Proj(
+        '+proj=stere +a=6378273 +b=6378273.0 '
+        ' +lon_0=-45 +lat_0=90 +lat_ts=90')

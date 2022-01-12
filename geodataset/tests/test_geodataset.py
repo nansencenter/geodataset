@@ -5,11 +5,12 @@ import os
 import subprocess
 import unittest
 
+from netCDF4 import Dataset
 import numpy as np
 import pyproj
 from pyresample.utils import load_cf_area
 
-from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead, Dataset, ProjectionInfo
+from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
 from geodataset.tests.base_for_tests import BaseForTests
 
@@ -25,25 +26,6 @@ class GeodatasetTestBase(BaseForTests):
         self.moorings_var = 'sic'
 
 class GeoDatasetBaseTest(GeodatasetTestBase):
-    @patch.multiple(GeoDatasetBase, __init__=MagicMock(return_value=None), variables=DEFAULT,
-            is_lonlat_dim=DEFAULT)
-    def test_get_xy_dims_from_lonlat_1(self, **kwargs):
-        lon = np.random.normal(size=(2,2))
-        lat = np.random.normal(size=(2,2))
-        nc = GeoDatasetBase()
-        nc.is_lonlat_dim = False
-        nc.projection = MagicMock()
-        nc.projection.pyproj = MagicMock(return_value = (2*lon, 3*lat))
-        acc = 1e-2
-        x = np.round(2*lon/acc)*acc
-        y = np.round(3*lat/acc)*acc
-
-        x2, y2 = nc.get_xy_dims_from_lonlat(lon, lat, accuracy=acc)
-        self.assert_arrays_equal(x2, x)
-        self.assert_arrays_equal(y2, y)
-        self.assert_mock_has_calls(nc.projection.pyproj,
-                [call(lon[0,:], lat[0,:]), call(lon[:,0], lat[:,0])])
-
     @patch.multiple(GeoDatasetBase, __init__=MagicMock(return_value=None), variables=DEFAULT)
     @patch('geodataset.geodataset.vars')
     def test_convert_time_data(self, mock_vars, **kwargs):
@@ -85,18 +67,31 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         self.assert_mock_has_calls(kwargs['convert_time_data'], [call(tdata)])
 
     @patch.multiple(GeoDatasetWrite,
-            __init__=MagicMock(return_value=None), createVariable=DEFAULT)
+            __init__=MagicMock(return_value=None),
+            createVariable=DEFAULT,
+            get_grid_mapping_ncattrs=DEFAULT)
     def test_set_projection_variable(self, **kwargs):
         nc = GeoDatasetWrite()
-        nc.projection_names = ('gm', 'gmn')
-        nc.projection = MagicMock()
-        nc.projection.ncattrs = MagicMock(return_value='ncatts')
+        nc.grid_mapping_name = 'Polar_Stereographic_Grid'
+        nc.spatial_dim_names = ('x', 'y')
+        nc.time_name = 'time'
+        nc.lonlat_names = ('longitude', 'latitude')
         nc.set_projection_variable()
+        kwargs['createVariable'].assert_called_once_with(
+            'Polar_Stereographic_Grid', 'i1'
+        )
+        kwargs['get_grid_mapping_ncattrs'].assert_called_once()
 
-        nc.projection.ncattrs.assert_called_once_with('gmn')
-        req_calls = [call('gm', 'i1'), call().setncatts('ncatts'),
-                call().setncatts({'proj4': '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs'})]
-        self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
+    @patch.multiple(GeoDatasetWrite,
+            __init__=MagicMock(return_value=None))
+    def test_get_grid_mapping_ncattrs(self, **kwargs):
+        nc = GeoDatasetWrite()
+        gm_attrs = nc.get_grid_mapping_ncattrs()
+        self.assertEqual(gm_attrs['proj4'],
+        '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 '
+        ' +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs +type=crs')
+        self.assertEqual(gm_attrs['grid_mapping_name'], 'polar_stereographic')
+        print(gm_attrs)
 
     @patch.multiple(GeoDatasetWrite,
             __init__=MagicMock(return_value=None),
@@ -188,8 +183,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
     def test_set_variable_1(self, f4, f8, **kwargs):
         ''' test f4 with _FillValue defined '''
         nc = GeoDatasetWrite()
-        nc.projection_names = ('gm', 'gmn')
-        nc.logger = MagicMock()
+        nc.grid_mapping_name = 'gmn'
         atts = dict(a1='A1', a2='A2', _FillValue='fv')
         f4.return_value = 'fv4'
         nc.set_variable('vname', 'data', 'dims', atts, dtype='f4')
@@ -198,7 +192,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
 
         req_calls = [
                 call('vname', 'f4', 'dims', fill_value='fv4', zlib=True),
-                call().setncatts({'a1': 'A1', 'a2': 'A2', 'grid_mapping': 'gm'}),
+                call().setncatts({'a1': 'A1', 'a2': 'A2', 'grid_mapping': 'gmn'}),
                 call().__setitem__(slice(None, None, None), 'data'),
                 ]
         self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
@@ -212,8 +206,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
     def test_set_variable_2(self, f4, f8, **kwargs):
         ''' test f8 with missing_value defined '''
         nc = GeoDatasetWrite()
-        nc.projection_names = ('gm', 'gmn')
-        nc.logger = MagicMock()
+        nc.grid_mapping_name = 'gmn'
         atts = dict(a1='A1', a2='A2', missing_value='fv')
         f8.return_value = 'fv8'
 
@@ -222,7 +215,11 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         f4.assert_not_called()
         req_calls = [
                 call('vname', 'f8', 'dims', zlib=True),
-                call().setncatts({'a1': 'A1', 'a2': 'A2', 'missing_value': 'fv8', 'grid_mapping': 'gm'}),
+                call().setncatts({
+                    'a1': 'A1', 
+                    'a2': 'A2', 
+                    'missing_value': 'fv8', 
+                    'grid_mapping': 'gmn'}),
                 call().__setitem__(slice(None, None, None), 'data'),
                 ]
         self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
@@ -355,6 +352,27 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             [8420199.606917838, 9005961.652806347, 
             -8418368.037664523, -7832478.150085783],
             1)
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            projection=DEFAULT,
+            is_lonlat_dim=DEFAULT,
+            )
+    def test_get_xy_dims_from_lonlat(self, **kwargs):
+        lon = np.array([[1,2,3],[1,2,3],[1,2,3]])
+        lat = np.array([[1,1,1],[2,2,2],[3,3,3]])
+        GeoDatasetRead.is_lonlat_dim = False
+        GeoDatasetRead.projection = pyproj.Proj(3411)
+        with GeoDatasetRead() as ds:
+            x, y = ds.get_xy_dims_from_lonlat(lon, lat)
+            np.testing.assert_almost_equal(x,
+                [8717000., 8863000., 9006000.],
+            1)
+            np.testing.assert_almost_equal(y,
+                [-8418000., -8274000., -8131000.],
+            1)
+        print('OK')
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,6 @@ from pyresample.utils import load_cf_area
 from xarray.core.variable import MissingDimensionsError
 
 from geodataset.utils import InvalidDatasetError
-from geodataset.projection_info import ProjectionInfo
 
 class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
@@ -69,33 +68,6 @@ class GeoDatasetBase(Dataset):
         """
         return (self.lonlat_names[0] in self.dimensions)
 
-    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e3):
-        """
-        Get the x,y vectors for the dimensions if they are not provided in the netcdf file
-        Assumes a regular grid in the input projection
-
-        Parameters:
-        -----------
-        lon : np.ndarray
-            2d longitude array, units = degrees_east
-        lat : np.ndarray
-            2d latitude array, units = degrees_north
-        accuracy : float
-            desired accuracy in m - we round to this accuracy so
-            that x and y are regularly spaced
-
-        Returns:
-        --------
-        x : np.ndarray
-            x coordinate vector, units = m
-        y : np.ndarray
-            y coordinate vector, units = m
-        """
-        assert(not self.is_lonlat_dim)
-        x = self.projection.pyproj(lon[0,:], lat[0,:])[0]
-        y = self.projection.pyproj(lon[:,0], lat[:,0])[1]
-        return [np.round(v/accuracy)*accuracy for v in [x, y]]
-
     @property
     def datetimes(self):
         """
@@ -131,37 +103,14 @@ class GeoDatasetBase(Dataset):
 
 class GeoDatasetWrite(GeoDatasetBase):
     """ Wrapper for netCDF4.Dataset for common ouput tasks """
+    grid_mapping_name = 'Polar_Stereographic_Grid'
+    spatial_dim_names = ('x', 'y')
+    time_name = 'time'
+    lonlat_names = ('longitude', 'latitude')    
+    projection = pyproj.Proj(
+            "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 "
+            " +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs")
 
-    def __init__(self, *args, **kwargs):
-        """
-        Initialise the object and add some default parameters which can be overridden by child classes.
-        Default parameters correspond to neXtSIM Moorings files.
-
-        Parameters:
-        -----------
-        args and kwargs for netCDF4.Dataset
-
-        Sets:
-        -----
-        projection : ProjectionInfo
-        projection_names : tuple(str)
-            (grid_mapping, grid_mapping_name)
-            - grid_mapping is the name of the projection variable
-            - grid_mapping_name is the name of the projection variable
-        spatial_dim_names : tuple(str)
-            names of spatial dimensions
-        lonlat_names : tuple(str)
-            names of lon,lat variables
-        time_name : str
-            name of time variable
-        """
-        super().__init__(*args, **kwargs)
-        self.projection_names = ('Polar_Stereographic_Grid', 'polar_stereographic')
-        self.spatial_dim_names = ('x', 'y')
-        self.time_name = 'time'
-        self.lonlat_names = ('longitude', 'latitude')
-        self.projection = ProjectionInfo()
-    
     def set_projection_variable(self):
         """
         set projection variable.
@@ -172,11 +121,8 @@ class GeoDatasetWrite(GeoDatasetBase):
         Check netcdf files at:
         http://cfconventions.org/compliance-checker.html
         """
-        gm, gmn = self.projection_names
-        pvar = self.createVariable(gm, 'i1')
-        pvar.setncatts(self.projection.ncattrs(gmn))
-        pvar.setncatts(dict(
-            proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs"))
+        pvar = self.createVariable(self.grid_mapping_name, 'i1')
+        pvar.setncatts(self.get_grid_mapping_ncattrs())
 
     def set_time_variables_dimensions(self, time_data, time_atts, time_bnds_data):
         """
@@ -269,7 +215,6 @@ class GeoDatasetWrite(GeoDatasetBase):
         dtype : str
             netcdf data type for new variable (eg 'f4' or 'f8')
         """
-        self.logger.debug('Creating variable %s' %vname)
         type_converter = dict(f4=np.float32, f8=np.double)[dtype]
         ncatts = {k:v for k,v in atts.items() if k != '_FillValue'}
         kw = dict(zlib=True)# use compression
@@ -280,9 +225,19 @@ class GeoDatasetWrite(GeoDatasetBase):
             # needs to be of right data type
             ncatts['missing_value'] = type_converter(atts['missing_value'])
         dst_var = self.createVariable(vname, dtype, dims, **kw)
-        ncatts['grid_mapping'] = self.projection_names[0]
+        ncatts['grid_mapping'] = self.grid_mapping_name
         dst_var.setncatts(ncatts)
         dst_var[:] = data
+
+    def get_grid_mapping_ncattrs(self):
+        '''
+        Get the netcdf attributes to set for a netcdf projection variable.
+        See https://www.unidata.ucar.edu/software/netcdf-java/current/reference/StandardCoordinateTransforms.html
+
+        '''
+        gm_attrs = self.projection.crs.to_cf()
+        gm_attrs.update({'proj4': str(self.projection.crs)})
+        return gm_attrs
 
 
 class GeoDatasetRead(GeoDatasetBase):
@@ -442,3 +397,30 @@ class GeoDatasetRead(GeoDatasetBase):
         lon, lat = self.get_lonlat_arrays()
         x, y = mapping(lon, lat)
         return [x.min(), x.max(), y.min(), y.max()]
+
+    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e3):
+        """
+        Get the x,y vectors for the dimensions if they are not provided in the netcdf file
+        Assumes a regular grid in the input projection
+
+        Parameters:
+        -----------
+        lon : np.ndarray
+            2d longitude array, units = degrees_east
+        lat : np.ndarray
+            2d latitude array, units = degrees_north
+        accuracy : float
+            desired accuracy in m - we round to this accuracy so
+            that x and y are regularly spaced
+
+        Returns:
+        --------
+        x : np.ndarray
+            x coordinate vector, units = m
+        y : np.ndarray
+            y coordinate vector, units = m
+        """
+        assert(not self.is_lonlat_dim)
+        x = self.projection(lon[0,:], lat[0,:])[0]
+        y = self.projection(lon[:,0], lat[:,0])[1]
+        return [np.round(v/accuracy)*accuracy for v in [x, y]]
