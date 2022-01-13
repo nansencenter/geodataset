@@ -20,6 +20,8 @@ class ToolsTests(BaseForTests):
             print(nc_file, ds.lonlat_names)
             self.assertIsInstance(ds.lonlat_names[0], str)
             self.assertIsInstance(ds.lonlat_names[1], str)
+            self.assertIsInstance(ds.variable_names, list)
+            self.assertIsInstance(ds.variable_names[0], str)
 
     def test_get_lonlat_arrays(self):
         for nc_file in self.nc_files:

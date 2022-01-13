@@ -42,25 +42,25 @@ class Etopo(CustomDatasetRead):
 
 class JaxaAmsr2IceConc(CustomDatasetRead):
     pattern = re.compile(r'Arc_\d{8}_res3.125_pyres.nc')
-    _filename_suffix = '_res3.125_pyres.nc'
     lonlat_names = 'longitude', 'latitude'
     projection = pyproj.Proj(3411)
+    grid_mapping_variable = 'absent'
 
 
 class MooringsNextsim(CustomDatasetRead):
-    _filename_prefix = 'Moorings'
     pattern = re.compile(r'Moorings.*.nc')
     projection = pyproj.Proj(
         '+proj=stere +a=6378273.0 +b=6356889.448910593 '
         '+lon_0=-45.0 +lat_0=90.0 +lat_ts=60.0')
+    grid_mapping_variable = 'Polar_Stereographic_Grid'
 
 
 class MooringsArcMfc(CustomDatasetRead):
-    _filename_prefix = 'Moorings'
     pattern = re.compile(r'Moorings.*.nc')
     projection = pyproj.Proj(
         '+proj=stere +a=6378273.0 +b=6378273.0 '
         '+lon_0=-45.0 +lat_0=90.0 +lat_ts=90.0')
+    grid_mapping_variable = 'absent'
 
 
 class NerscSarProducts(CustomDatasetRead):
@@ -83,21 +83,24 @@ class OsisafDriftersNextsim(CustomDatasetRead):
     pattern = re.compile(r'OSISAF_Drifters_.*.nc')
     projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
      " +a=6378273 +b=6356889.44891 ")
+    grid_mapping_variable = 'absent'
 
 
 class SmosIceThickness(CustomDatasetRead):
     pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
     projection = pyproj.Proj(3411)
+    grid_mapping_variable = 'absent'
 
 
 class Topaz4Forecast(CustomDatasetRead):
     pattern = re.compile(r'\d{8}_dm-metno-MODEL-topaz4-ARC-b\d{8}-fv02.0.nc')
     projection = pyproj.Proj("+proj=stere +lat_0=90 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
+    grid_mapping_variable = 'stereographic'
 
 
 class NetcdfArcMFC(GeoDatasetWrite):
     """ wrapper for netCDF4.Dataset with info about ArcMFC products """
-    grid_mapping_name = 'stereographic'
+    grid_mapping_variable = 'stereographic'
     projection = pyproj.Proj(
         '+proj=stere +a=6378273 +b=6378273.0 '
         ' +lon_0=-45 +lat_0=90 +lat_ts=90')

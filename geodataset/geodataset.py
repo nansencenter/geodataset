@@ -7,9 +7,10 @@ import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
 from pyresample.utils import load_cf_area
+from scipy.interpolate import RegularGridInterpolator
 from xarray.core.variable import MissingDimensionsError
 
-from geodataset.utils import InvalidDatasetError
+from geodataset.utils import InvalidDatasetError, fill_nan_gaps
 
 class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
@@ -103,7 +104,7 @@ class GeoDatasetBase(Dataset):
 
 class GeoDatasetWrite(GeoDatasetBase):
     """ Wrapper for netCDF4.Dataset for common ouput tasks """
-    grid_mapping_name = 'Polar_Stereographic_Grid'
+    grid_mapping_variable = None
     spatial_dim_names = ('x', 'y')
     time_name = 'time'
     lonlat_names = ('longitude', 'latitude')    
@@ -121,7 +122,7 @@ class GeoDatasetWrite(GeoDatasetBase):
         Check netcdf files at:
         http://cfconventions.org/compliance-checker.html
         """
-        pvar = self.createVariable(self.grid_mapping_name, 'i1')
+        pvar = self.createVariable(self.grid_mapping_variable, 'i1')
         pvar.setncatts(self.get_grid_mapping_ncattrs())
 
     def set_time_variables_dimensions(self, time_data, time_atts, time_bnds_data):
@@ -225,7 +226,7 @@ class GeoDatasetWrite(GeoDatasetBase):
             # needs to be of right data type
             ncatts['missing_value'] = type_converter(atts['missing_value'])
         dst_var = self.createVariable(vname, dtype, dims, **kw)
-        ncatts['grid_mapping'] = self.grid_mapping_name
+        ncatts['grid_mapping'] = self.grid_mapping_variable
         dst_var.setncatts(ncatts)
         dst_var[:] = data
 
@@ -437,3 +438,64 @@ class GeoDatasetRead(GeoDatasetBase):
             ecc = g.es,
         )
         return kwargs
+
+    def get_var_for_nextsim(
+        self, var_name, nbo, distance=5, on_elements=True, fill_value=np.nan):
+        """ Interpolate netCDF data onto mesh from NextsimBin object
+        
+        Parameters
+        ----------
+        var_name : str
+            name of variable
+        nbo : NextsimBin
+            nextsim bin object with mesh_info attribute
+        distance : int
+            extrapolation distance (in pixels) to avoid land contamintation
+        on_elements : bool
+            perform interpolation on elements or nodes?
+        fill_value : bool
+            value for filling out of bound regions
+        
+        Returns
+        -------
+        v_pro : 1D nupy.array
+            values from netCDF interpolated on nextsim mesh
+        
+        """
+        # get self coordinates
+        nc_lon, nc_lat = self.get_lonlat_arrays()
+        if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
+            raise ValueError('Can inteporlate only 2D data from netCDF file')
+        # get variable
+        nc_v = self.get_variable_array(var_name).filled(np.nan)
+
+        # get elements coordinates in neXtSIM projection
+        nb_x, nb_y = nbo.mesh_info.get_nodes_xy()
+        t = nbo.mesh_info.get_indices() - 1
+        if on_elements:
+            nb_x, nb_y = [i[t].mean(axis=1) for i in [nb_x, nb_y]]
+        
+        # transform nextsim coordinates to lon/lat
+        nb_x, nb_y = nbo.mesh_info.projection.pyproj(nb_x, nb_y, inverse=True)
+            
+        # transform to common coordinate system if needed
+        if not self.is_lonlat_dim: 
+            nc_x, nc_y = self.get_xy_dims_from_lonlat(nc_lon, nc_lat)
+            nb_x, nb_y = self.projection(nb_x, nb_y)
+        else:
+            nc_x, nc_y = nc_lon[0], nc_lat[:,0]
+        
+        # fill nan gaps to avoid land contamination
+        nc_v = fill_nan_gaps(nc_v, distance)
+        # swap Y axis if needed
+        y_step = int(np.sign(np.mean(np.diff(nc_y))))
+        # make interpolator
+        rgi = RegularGridInterpolator((nc_y[::y_step], nc_x), nc_v[::y_step])
+        # interpolate only values within self bbox
+        gpi = ((nb_x > nc_x.min()) * 
+            (nb_x < nc_x.max()) *
+            (nb_y > nc_y.min()) *
+            (nb_y < nc_y.max()))
+        v_pro = np.zeros(nb_x.shape) + fill_value
+        v_pro[gpi] = rgi((nb_y[gpi], nb_x[gpi]))
+        return v_pro

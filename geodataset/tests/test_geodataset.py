@@ -72,14 +72,12 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
             get_grid_mapping_ncattrs=DEFAULT)
     def test_set_projection_variable(self, **kwargs):
         nc = GeoDatasetWrite()
-        nc.grid_mapping_name = 'Polar_Stereographic_Grid'
+        nc.grid_mapping_variable = 'psg'
         nc.spatial_dim_names = ('x', 'y')
         nc.time_name = 'time'
         nc.lonlat_names = ('longitude', 'latitude')
         nc.set_projection_variable()
-        kwargs['createVariable'].assert_called_once_with(
-            'Polar_Stereographic_Grid', 'i1'
-        )
+        kwargs['createVariable'].assert_called_once_with('psg', 'i1')
         kwargs['get_grid_mapping_ncattrs'].assert_called_once()
 
     @patch.multiple(GeoDatasetWrite,
@@ -183,7 +181,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
     def test_set_variable_1(self, f4, f8, **kwargs):
         ''' test f4 with _FillValue defined '''
         nc = GeoDatasetWrite()
-        nc.grid_mapping_name = 'gmn'
+        nc.grid_mapping_variable = 'gmn'
         atts = dict(a1='A1', a2='A2', _FillValue='fv')
         f4.return_value = 'fv4'
         nc.set_variable('vname', 'data', 'dims', atts, dtype='f4')
@@ -206,7 +204,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
     def test_set_variable_2(self, f4, f8, **kwargs):
         ''' test f8 with missing_value defined '''
         nc = GeoDatasetWrite()
-        nc.grid_mapping_name = 'gmn'
+        nc.grid_mapping_variable = 'gmn'
         atts = dict(a1='A1', a2='A2', missing_value='fv')
         f8.return_value = 'fv8'
 
@@ -386,6 +384,38 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         self.assertEqual(kwargs,
         {'proj': 'stere', 'lat_0': 90, 'lat_ts': 70, 'lon_0': -45, 
         'a': 6378273.0, 'ecc': 0.0066938828637783665})
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            __exit__=MagicMock(return_value=None),
+            projection=pyproj.Proj(3411),
+            get_lonlat_arrays=MagicMock(return_value=(
+                np.array([[0,1],[0,1]]),
+                np.array([[1,1],[0,0]]),
+            )),
+            get_variable_array=MagicMock(
+                return_value=np.ma.array([[1,2],[3,4]])),
+            is_lonlat_dim=False,
+            )
+    @patch('geodataset.geodataset.fill_nan_gaps')
+    def test_get_var_for_nextsim(self, mock_fng, **kwargs):
+        mock_fng.return_value = np.array([[1,2],[3,4]])
+
+        nbo = MagicMock()
+        nbo.mesh_info.get_nodes_xy.return_value = (
+            np.array([8569000.1, 8569000.2, 8569000.3]), 
+            np.array([-8569000.1, -8569000.2, -8569000.3]))
+        nbo.mesh_info.get_indices.return_value = np.array([[1,2,3],])
+        nbo.mesh_info.projection.pyproj = pyproj.Proj(3411)
+
+        with GeoDatasetRead() as ds:
+            v_pro = ds.get_var_for_nextsim('var_name', nbo, 10)
+
+        self.assertAlmostEqual(v_pro[0], 1.00000402, 1)
+        ds.get_lonlat_arrays.assert_called_once()
+        ds.get_variable_array.assert_called_once_with('var_name')
+        mock_fng.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
