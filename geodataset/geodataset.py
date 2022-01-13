@@ -427,6 +427,14 @@ class GeoDatasetRead(GeoDatasetBase):
         return [np.round(v/accuracy)*accuracy for v in [x, y]]
 
     def get_proj_info_kwargs(self):
+        """ Create dictionary with NC attributes for grid mapping variable
+        
+        Returns
+        -------
+        kwargs : dict
+            NC attributes for grid mapping variable + proj
+        
+        """
         g = self.projection.crs.get_geod()
         d = self.projection.crs.to_dict()
         kwargs = dict(
@@ -439,8 +447,8 @@ class GeoDatasetRead(GeoDatasetBase):
         )
         return kwargs
 
-    def get_var_for_nextsim(
-        self, var_name, nbo, distance=5, on_elements=True, fill_value=np.nan):
+    def get_var_for_nextsim(self, var_name, nbo, 
+        distance=5, on_elements=True, fill_value=np.nan, **kwargs):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -455,6 +463,8 @@ class GeoDatasetRead(GeoDatasetBase):
             perform interpolation on elements or nodes?
         fill_value : bool
             value for filling out of bound regions
+        kwargs : dict
+            dummy
         
         Returns
         -------
