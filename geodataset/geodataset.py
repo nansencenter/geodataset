@@ -17,6 +17,8 @@ class GeoDatasetBase(Dataset):
     lonlat_names = None
     projection = None
     time_name = 'time'
+    is_lonlat_2d = True
+
 
     def __init__(self, *args, **kwargs):
         """

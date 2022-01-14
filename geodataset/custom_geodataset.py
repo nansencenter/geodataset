@@ -36,8 +36,7 @@ class Etopo(CustomDatasetRead):
     pattern = re.compile(r'ETOPO_Arctic_\d{1,2}arcmin.nc')
 
     def get_lonlat_arrays(self):
-        lon, lat = super().get_lonlat_arrays()
-        return np.meshgrid(lon, lat)
+        return np.meshgrid(self['lon'][:], self['lat'][:])
 
 
 class JaxaAmsr2IceConc(CustomDatasetRead):
@@ -67,8 +66,7 @@ class NerscSarProducts(CustomDatasetRead):
     lonlat_names = 'absent', 'absent'
     def get_lonlat_arrays(self):
         x_grd, y_grd = np.meshgrid(self['x'][:], self['y'][:])
-        return self.projection.transform(
-            x_grd, y_grd, direction=pyproj.enums.TransformDirection.INVERSE)
+        return self.projection(x_grd, y_grd, inverse=True)
     
 
 class NerscDeformation(NerscSarProducts):
@@ -84,6 +82,7 @@ class OsisafDriftersNextsim(CustomDatasetRead):
     projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
      " +a=6378273 +b=6356889.44891 ")
     grid_mapping_variable = 'absent'
+    is_lonlat_2d = False
 
 
 class SmosIceThickness(CustomDatasetRead):

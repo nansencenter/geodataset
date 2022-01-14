@@ -27,6 +27,8 @@ class ToolsTests(BaseForTests):
         for nc_file in self.nc_files:
             with self.subTest(nc_file=nc_file):
                 ds = open_netcdf(nc_file)
+                if not ds.is_lonlat_2d:
+                    continue
                 lon, lat = ds.get_lonlat_arrays()
                 print(nc_file, len(lon.shape))
                 self.assertEqual(len(lon.shape), 2)
