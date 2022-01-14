@@ -87,8 +87,10 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         gm_attrs = nc.get_grid_mapping_ncattrs()
         self.assertEqual(gm_attrs['proj4'],
         '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 '
-        ' +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs +type=crs')
-        self.assertEqual(gm_attrs['grid_mapping_name'], 'polar_stereographic')
+        ' +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +type=crs')
+        self.assertIn(
+            gm_attrs['grid_mapping_name'], 
+            ['polar_stereographic', 'stereographic'])
         print(gm_attrs)
 
     @patch.multiple(GeoDatasetWrite,

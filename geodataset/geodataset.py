@@ -110,7 +110,7 @@ class GeoDatasetWrite(GeoDatasetBase):
     lonlat_names = ('longitude', 'latitude')    
     projection = pyproj.Proj(
             "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 "
-            " +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m +no_defs")
+            " +x_0=0 +y_0=0 +R=6378273 +ellps=sphere +units=m")
 
     def set_projection_variable(self):
         """
@@ -339,7 +339,8 @@ class GeoDatasetRead(GeoDatasetBase):
         else:
             return area_def_cf_info
 
-    def get_variable_array(self, var_name, time_index=0):
+    def get_variable_array(
+        self, var_name, time_index=0, ij_range=(None, None, None, None)):
         """ Get array with values from a given variable. 
         If variable has time dimension, time_index is used.
         
@@ -349,6 +350,8 @@ class GeoDatasetRead(GeoDatasetBase):
             name of variable
         time_index: int
             from which time layer to read data
+        ij_range : tuple with 4 ints
+            start/stop along i and j (y and x) axis
 
         Returns
         -------
@@ -356,18 +359,33 @@ class GeoDatasetRead(GeoDatasetBase):
             data from variable from time_index
 
         """
-        ds_var = self[var_name]
-        array = ds_var[:]
-        if 'time' in ds_var.dimensions:
-            time_axis = ds_var.dimensions.index('time')
-            array = array.take(indices=time_index, axis=time_axis)
-        return array
+        if 'time' in self[var_name].dimensions:
+            return self[var_name][
+                time_index, ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
+        else:
+            return self[var_name][
+                ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
 
-    def get_lonlat_arrays(self):
-        # if lon and lat are arrays
-        return [self.get_variable_array(name) for name in self.lonlat_names]
 
-    def get_area_euclidean(self, mapping):
+    def get_lonlat_arrays(self, ij_range=(None, None, None, None)):
+        """ Get array with longitude latidtude arrays 
+        
+        Parameters
+        ----------
+        ij_range : tuple with 4 ints
+            start/stop along i and j (y and x) axis
+
+        Returns
+        -------
+        lonlat_arrays : 2 2D-numpy.arrays
+            longitude and latitude
+
+        """        
+        return [
+            self.get_variable_array(name, ij_range) 
+            for name in self.lonlat_names]
+
+    def get_area_euclidean(self, mapping, ij_range=(None, None, None, None)):
         """
         Calculates element area from netcdf file
         Assumes regular grid in the given projection
@@ -375,15 +393,20 @@ class GeoDatasetRead(GeoDatasetBase):
         Parameters:
         -----------
         mapping : pyproj.Proj
+            translate from lonlat to projected coordinates
+        ij_range : tuple with 4 ints
+            start/stop along i and j (y and x) axis
 
         Returns:
         --------
         * area (float)
         """
-        lon, lat = self.get_lonlat_arrays()
+        lon, lat = self.get_lonlat_arrays(ij_range)
         x, y = mapping(lon, lat)
-        dy = np.max([np.abs(np.mean(y[:, 2]-y[:, 1])), np.abs(np.mean(y[1, :]-y[0, :]))])
-        dx = np.max([np.abs(np.mean(x[:, 2]-x[:, 1])), np.abs(np.mean(x[1, :]-x[0, :]))])
+        dy, dx = [np.max([
+            np.abs(np.mean(z[:, 2]-z[:, 1])), 
+            np.abs(np.mean(z[1, :]-z[0, :]))])
+            for z in [y, x]]
         return np.abs(dx*dy)
 
     def get_bbox(self, mapping):
