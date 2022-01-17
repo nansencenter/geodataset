@@ -6,7 +6,6 @@ import netcdftime
 import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
-from pyresample.utils import load_cf_area
 from scipy.interpolate import RegularGridInterpolator
 from xarray.core.variable import MissingDimensionsError
 
@@ -292,54 +291,93 @@ class GeoDatasetRead(GeoDatasetBase):
 
     @property
     def projection(self):
-        """ Read projection of the dataset from self.area_definition
+        """ Read projection of the dataset from self.grid_mapping
         
         Returns
         -------
         projection : pyproj.Proj
 
         """
-        return pyproj.Proj(self.area_definition.crs)
-
-    @property
-    def area_definition(self):
-        """ Read area definition of the dataset from self._area_def_cf_info
-        
-        Returns
-        -------
-        area_definition : pyresample.AreaDefinition
-
-        """
-        return self._area_def_cf_info[0]
+        return pyproj.Proj(self.grid_mapping[0])
 
     @property
     def grid_mapping_variable(self):
-        """ Read name of the grid mapping variable from self._area_def_cf_info
+        """ Read name of the grid mapping variable from self.grid_mapping
         
         Returns
         -------
         grid_mapping_variable : str
 
         """
-        return self._area_def_cf_info[1]['grid_mapping_variable']
-
+        return self.grid_mapping[1]
+    
     @property
     @lru_cache(1)
-    def _area_def_cf_info(self):
-        """ Read area definition and grid mapping information using pyresample.load_cf_area
+    def grid_mapping(self):
+        """ Load CRS and grid mapping variable name from CF-attrinbutes OR from lon/lat
+        If grid mapping cannot be loaded from file, InvalidDatasetError is raised
         
         Returns
         -------
-        area_def_cf_info : tuple
-            area_definition and grid_mapping_information
+        csr : pyproj.CRS
+            coordinate reference system
+        v : str
+            name of grid_mapping_variable or "absent"
 
         """
-        try:
-            area_def_cf_info = load_cf_area(self.filename)
-        except (MissingDimensionsError, CRSError, KeyError, ValueError) as e:
-            raise InvalidDatasetError
-        else:
-            return area_def_cf_info
+        crs, v = self.get_grid_mapping_from_cf_attrs()
+        if not crs:
+            crs, v = self.get_grid_mapping_from_lonlat()
+            if not crs:
+                raise InvalidDatasetError
+        return crs, v
+        
+    def get_grid_mapping_from_cf_attrs(self):
+        """ Load CRS and grid mapping var name from CF-attributes
+        
+        Returns
+        -------
+        csr : pyproj.CRS or None
+            coordinate reference system
+        v : str or None
+            name of grid mapping variable
+
+        """
+        for var_name, variable in self.variables.items():
+            attrs = {attr:variable.getncattr(attr) for attr in variable.ncattrs()}
+            try:
+                crs = pyproj.CRS.from_cf(attrs)
+            except CRSError:
+                pass
+            else:
+                return crs, var_name
+        return None, None
+
+    def get_grid_mapping_from_lonlat(self):
+        """ Check if longitude and latitude are dimentions and return longlat CRS and "absent",
+        otherwise return None, None
+        
+        Returns
+        -------
+        csr : pyproj.CRS or None
+            coordinate reference system
+        v : str
+            name of grid mapping variable
+
+        """
+        lon_is_dim = False
+        lat_is_dim = False
+        for d in self.dimensions:
+            if d in self.variables:
+                if 'standard_name' in self.variables[d].ncattrs():
+                    if self.variables[d].standard_name == 'longitude':
+                        lon_is_dim = True
+                    elif self.variables[d].standard_name == 'latitude':
+                        lat_is_dim = True
+            if lon_is_dim and lat_is_dim:
+                return pyproj.CRS(
+                    '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
+        return None, None
 
     def get_variable_array(
         self, var_name, time_index=0, ij_range=(None, None, None, None)):

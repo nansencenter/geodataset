@@ -5,12 +5,10 @@ from geodataset.custom_geodataset import (
     Dist2Coast,
     Etopo,
     JaxaAmsr2IceConc, 
-    MooringsNextsim,
     NerscDeformation, 
     NerscIceType, 
     OsisafDriftersNextsim,
     SmosIceThickness,
-    Topaz4Forecast,
 )
 
 custom_read_classes = [
@@ -18,18 +16,22 @@ custom_read_classes = [
     Dist2Coast,
     Etopo,
     JaxaAmsr2IceConc, 
-    MooringsNextsim,
     NerscDeformation, 
     NerscIceType,
     OsisafDriftersNextsim,
     SmosIceThickness,
-    Topaz4Forecast,
     # always last:
     GeoDatasetRead,
 ]
 
 def open_netcdf(file_address):
-
+    """ Open NetCDF with read access and add geospatial metadata 
+    
+    Returns
+    -------
+    ds : GeoDataset or custom children
+        similar to netCDF4.Dataset with geospatial metadata and methods
+    """
     for class_ in custom_read_classes:
         try:
             obj = class_(file_address)

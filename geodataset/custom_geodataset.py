@@ -4,7 +4,7 @@ import re
 import numpy as np
 import pyproj
 
-from geodataset.geodataset import GeoDatasetRead, GeoDatasetWrite
+from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
 
 class CustomDatasetRead(GeoDatasetRead):
@@ -18,11 +18,6 @@ class CustomDatasetRead(GeoDatasetRead):
 class CmemsMetIceChart(CustomDatasetRead):
     pattern = re.compile(r'ice_conc_svalbard_\d{12}.nc')
     lonlat_names = 'lon', 'lat'
-    grid_mapping_variable = 'crs'
-
-    @property
-    def projection(self):
-        return pyproj.Proj(self.variables['crs'].proj4_string)
 
 
 class Dist2Coast(CustomDatasetRead):
@@ -42,24 +37,7 @@ class Etopo(CustomDatasetRead):
 class JaxaAmsr2IceConc(CustomDatasetRead):
     pattern = re.compile(r'Arc_\d{8}_res3.125_pyres.nc')
     lonlat_names = 'longitude', 'latitude'
-    projection = pyproj.Proj(3411)
-    grid_mapping_variable = 'absent'
-
-
-class MooringsNextsim(CustomDatasetRead):
-    pattern = re.compile(r'Moorings.*.nc')
-    projection = pyproj.Proj(
-        '+proj=stere +a=6378273.0 +b=6356889.448910593 '
-        '+lon_0=-45.0 +lat_0=90.0 +lat_ts=60.0')
-    grid_mapping_variable = 'Polar_Stereographic_Grid'
-
-
-class MooringsArcMfc(CustomDatasetRead):
-    pattern = re.compile(r'Moorings.*.nc')
-    projection = pyproj.Proj(
-        '+proj=stere +a=6378273.0 +b=6378273.0 '
-        '+lon_0=-45.0 +lat_0=90.0 +lat_ts=90.0')
-    grid_mapping_variable = 'absent'
+    grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
 
 
 class NerscSarProducts(CustomDatasetRead):
@@ -79,27 +57,12 @@ class NerscIceType(NerscSarProducts):
 
 class OsisafDriftersNextsim(CustomDatasetRead):
     pattern = re.compile(r'OSISAF_Drifters_.*.nc')
-    projection = pyproj.Proj("+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
-     " +a=6378273 +b=6356889.44891 ")
-    grid_mapping_variable = 'absent'
+    grid_mapping = pyproj.CRS.from_proj4(
+        " +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
+        " +a=6378273 +b=6356889.44891 "), 'absent'
     is_lonlat_2d = False
 
 
 class SmosIceThickness(CustomDatasetRead):
     pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
-    projection = pyproj.Proj(3411)
-    grid_mapping_variable = 'absent'
-
-
-class Topaz4Forecast(CustomDatasetRead):
-    pattern = re.compile(r'\d{8}_dm-metno-MODEL-topaz4-ARC-b\d{8}-fv02.0.nc')
-    projection = pyproj.Proj("+proj=stere +lat_0=90 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
-    grid_mapping_variable = 'stereographic'
-
-
-class NetcdfArcMFC(GeoDatasetWrite):
-    """ wrapper for netCDF4.Dataset with info about ArcMFC products """
-    grid_mapping_variable = 'stereographic'
-    projection = pyproj.Proj(
-        '+proj=stere +a=6378273 +b=6378273.0 '
-        ' +lon_0=-45 +lat_0=90 +lat_ts=90')
+    grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'

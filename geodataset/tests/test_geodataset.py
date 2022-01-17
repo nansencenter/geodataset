@@ -8,7 +8,7 @@ import unittest
 from netCDF4 import Dataset
 import numpy as np
 import pyproj
-from pyresample.utils import load_cf_area
+from pyproj.exceptions import CRSError
 
 from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
@@ -279,11 +279,9 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         variables['lon'].standard_name = 'longitude'
         variables['lat'].standard_name = 'latitude'
         variables['sic'].standard_name = 'sea_ice_concentration'
-        
         with GeoDatasetRead() as ds:
             ds.variables = variables
             lon_name, lat_name = ds.lonlat_names
-
         self.assertEqual(lon_name, 'lon')
         self.assertEqual(lat_name, 'lat')
 
@@ -298,27 +296,87 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         }
         variables['lon'].ncattrs.return_value = ['standard_name', 'a', 'b']
         variables['lon'].standard_name = 'longitude'
-        
         with GeoDatasetRead() as ds:
             ds.variables = variables
             with self.assertRaises(InvalidDatasetError):
                 lon_name, lat_name = ds.lonlat_names
 
-    @patch('geodataset.geodataset.load_cf_area')
-    def test_area_def_cf_info(self, mock_lca):
-        with GeoDatasetRead(self.osisaf_filename) as ds:
-            a = ds._area_def_cf_info
-            b = ds._area_def_cf_info
-            mock_lca.assert_called_once_with(ds.filename)
-
     def test_grid_mapping_variable(self):
         with GeoDatasetRead(self.osisaf_filename) as ds:
             self.assertEqual(ds.grid_mapping_variable, 'Polar_Stereographic_Grid')
-            
-    def test_projection(self):
-        p = pyproj.Proj(load_cf_area(self.osisaf_filename)[0].crs)
-        with GeoDatasetRead(self.osisaf_filename) as ds:
-            self.assertEqual(ds.projection, p)
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            grid_mapping=["gm_crs", "gm_var"],
+            )
+    @patch('geodataset.geodataset.pyproj.Proj')
+    def test_projection(self, mock_Proj):
+        ds = GeoDatasetRead()
+        p = ds.projection
+        mock_Proj.assert_called_once_with('gm_crs')
+        
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            grid_mapping=["gm_crs", "gm_var"],
+            )
+    def test_grid_mapping_variable(self):
+        ds = GeoDatasetRead()
+        self.assertEqual(ds.grid_mapping_variable, 'gm_var')
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            get_grid_mapping_from_cf_attrs=DEFAULT,
+            get_grid_mapping_from_lonlat=DEFAULT,
+            )
+    def test_grid_mapping(self, **kwargs):
+        GeoDatasetRead.get_grid_mapping_from_cf_attrs.return_value = None, None
+        GeoDatasetRead.get_grid_mapping_from_lonlat.return_value = None, None
+        ds = GeoDatasetRead()
+        with self.assertRaises(InvalidDatasetError):
+            gm = ds.grid_mapping
+        GeoDatasetRead.get_grid_mapping_from_lonlat.return_value = "longlat_crs", "absent"
+        ds = GeoDatasetRead()
+        self.assertEqual(ds.grid_mapping, ("longlat_crs", "absent"))
+        GeoDatasetRead.get_grid_mapping_from_cf_attrs.return_value = 'crs', 'gm_var_name'
+        ds = GeoDatasetRead()
+        self.assertEqual(ds.grid_mapping, ('crs', 'gm_var_name'))
+
+    @patch.multiple(GeoDatasetRead,
+            __init__=MagicMock(return_value=None),
+            variables=DEFAULT)
+    @patch('geodataset.geodataset.pyproj.CRS')
+    def test_get_grid_mapping_from_cf_attrs(self, mock_CRS, **kwargs):
+        GeoDatasetRead.variables = {
+            'var_name': MagicMock(**{
+                'ncattrs.return_value':['attr_name'], 
+                'getncattr.return_value': 'attr_val'})}
+        ds = GeoDatasetRead()
+        mock_CRS.from_cf.side_effect = CRSError('error message')
+        crs, varname = ds.get_grid_mapping_from_cf_attrs()
+        self.assertEqual((crs, varname), (None, None))
+        mock_CRS.from_cf.return_value = 'crs'
+        mock_CRS.from_cf.side_effect = None
+        crs, varname = ds.get_grid_mapping_from_cf_attrs()
+        self.assertEqual((crs, varname), ('crs', 'var_name'))
+
+    @patch.multiple(GeoDatasetRead, __init__=MagicMock(return_value=None), dimensions=DEFAULT, variables=DEFAULT)
+    def test_get_grid_mapping_from_lonlat(self, **kwargs):
+        GeoDatasetRead.dimensions = ['lon', 'lat']
+        variables = {'lon': Mock(), 'lat': Mock()}
+        variables['lon'].ncattrs.return_value = ['standard_name']
+        variables['lon'].standard_name = 'longitude'
+        variables['lat'].ncattrs.return_value = ['standard_name']
+        variables['lat'].standard_name = 'latitude'
+        ds = GeoDatasetRead()
+        ds.variables = variables
+        crs, varname = ds.get_grid_mapping_from_lonlat()
+        self.assertEqual(
+            (crs, varname),
+            (pyproj.CRS('+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'))
+        ds = GeoDatasetRead()
+        ds.variables = {'bla': Mock(), 'blo': Mock()}
+        crs, varname = ds.get_grid_mapping_from_lonlat()
+        self.assertEqual((crs, varname), (None, None))
 
     @patch.multiple(GeoDatasetRead,
             __init__=MagicMock(return_value=None),
