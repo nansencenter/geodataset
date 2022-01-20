@@ -8,6 +8,8 @@ on:
 jobs:
   test-build-publish:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:bionic
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
