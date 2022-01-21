@@ -15,7 +15,7 @@ jobs:
       - name: Download test data
         run : |
           mkdir -p /home/runner/work/test_data
-          $CONDA/bin/gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
+          gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
   test:
     needs: get_test_data
     runs-on: ubuntu-latest
