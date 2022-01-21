@@ -33,7 +33,12 @@ jobs:
       volumes:
         - /home/runner/work/test_data:/netcdf
     steps:
-    - uses: actions/checkout@v2
-    - name: Test with pytest
-      run: |
-        pytest
+      - uses: actions/checkout@v2
+      - name: Test with pytest
+        run: |
+          pytest
+  publish:
+    needs: test
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v2
