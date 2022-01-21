@@ -16,8 +16,9 @@ jobs:
       - name: Cache
         uses: actions/cache@v2
         with:
-          path: $TEST_DATA_DIR
+          path: ${{ test.container.env.TEST_DATA_DIR }}
           key: 0
+        id: cache
       - name: Download test data
         run : |
           mkdir -p $TEST_DATA_DIR
