@@ -11,7 +11,7 @@ jobs:
     env:
       TEST_DATA_DIR: /netcdf
     container:
-      image: nansencenter/geodataset_base:latest
+      image: nansencenter/geodataset:latest
       env:
         TEST_DATA_DIR: ${{ env.TEST_DATA_DIR }}
     steps:
