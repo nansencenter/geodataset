@@ -15,9 +15,9 @@ jobs:
     - name: Download test data
       run: |
         mkdir -p /home/runner/work/test_data
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O /home/runner/work/test_data/
+        gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
+        gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O /home/runner/work/test_data/
+        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O /home/runner/work/test_data/
     - name: Test with pytest
       run: |
         pytest
