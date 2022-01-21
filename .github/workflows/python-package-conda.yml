@@ -36,10 +36,10 @@ jobs:
   test:
     needs: get_test_data
     runs-on: ubuntu-latest
-    container:
-      image: nansencenter/geodataset_base:latest
-      env:
-        TEST_DATA_DIR: /netcdf
+    #container:
+    #  image: nansencenter/geodataset_base:latest
+    #  env:
+    #    TEST_DATA_DIR: /netcdf
     steps:
       - name: Cache
         uses: actions/cache@v2
