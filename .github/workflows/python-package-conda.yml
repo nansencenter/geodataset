@@ -9,27 +9,18 @@ jobs:
   test-build-publish:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:bionic
+      image: nansencenter/geodataset_base:latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: |
-        $CONDA/bin/conda env update --file environment.yml --name base
     - name: Download test data
       run: |
         mkdir -p /home/runner/work/test_data
         $CONDA/bin/gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
         $CONDA/bin/gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O /home/runner/work/test_data/
         $CONDA/bin/gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1S0OLfr6DdJIflZC6mVbYTjKHj4XZ4TKg -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1RD9V1iS-tS0QIdg2IUyX_KR4PK3SpbFl -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1KGapeF6EG4h8gGPxNbkyRnRBYu3i7bdD -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O /home/runner/work/test_data/
-        $CONDA/bin/gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O /home/runner/work/test_data/
     - name: Test with pytest
       run: |
-        $CONDA/bin/pytest
+        pytest
       env:
           TEST_DATA_DIR: /home/runner/work/test_data/
     - name: Build Python package
