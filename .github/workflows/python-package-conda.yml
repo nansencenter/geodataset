@@ -23,7 +23,6 @@ jobs:
         id: cache
       - name: Download test data
         run : |
-          echo "test data dir:" $TEST_DATA_DIR
           mkdir -p $TEST_DATA_DIR
           gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O $TEST_DATA_DIR/
           gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O $TEST_DATA_DIR/
@@ -35,8 +34,6 @@ jobs:
           gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O $TEST_DATA_DIR/
           gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O $TEST_DATA_DIR/
         if: steps.cache.outputs.cache-hit != 'true'
-      - name: Check data dir content
-        run: ls -l $TEST_DATA_DIR/
       - uses: actions/checkout@v2
       - name: Test with pytest
         run: |
