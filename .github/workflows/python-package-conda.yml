@@ -6,20 +6,19 @@ on:
     types: [released]
 
 jobs:
-  get_test_data:
+  test:
+    needs: get_test_data
     runs-on: ubuntu-latest
-    env:
-      TEST_DATA_DIR: /home/runner/work/test_data
+    container:
+      image: nansencenter/geodataset_base:latest
+      env:
+        TEST_DATA_DIR: /netcdf
     steps:
-      - name: Install gdown
-        run: |
-          pip install gdown 
       - name: Cache
         uses: actions/cache@v2
         with:
-          path: ${{ env.TEST_DATA_DIR }}
-          key: 2
-        id: cache
+          path: ${{ container.env.TEST_DATA_DIR }}
+          key: 0
       - name: Download test data
         run : |
           mkdir -p $TEST_DATA_DIR
@@ -33,21 +32,8 @@ jobs:
           gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O $TEST_DATA_DIR/
           gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O $TEST_DATA_DIR/
         if: steps.cache.outputs.cache-hit != 'true'
-  test:
-    needs: get_test_data
-    runs-on: ubuntu-latest
-    container:
-      image: nansencenter/geodataset_base:latest
-      env:
-        TEST_DATA_DIR: /netcdf
-    steps:
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: /home/runner/work/test_data
-          key: 2
-      - name: Chech data dir content
-        run: ls -l /home/runner/work/test_data
+      - name: Check data dir content
+        run: ls -l $TEST_DATA_DIR/
       - uses: actions/checkout@v2
       - name: Test with pytest
         run: |
