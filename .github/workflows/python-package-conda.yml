@@ -7,7 +7,6 @@ on:
 
 jobs:
   test:
-    needs: get_test_data
     runs-on: ubuntu-latest
     container:
       image: nansencenter/geodataset_base:latest
