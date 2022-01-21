@@ -10,26 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nansencenter/geodataset_base:latest
-    env:
-        TEST_DATA_DIR: /home/runner/work/test_data/
+      env:
+          TEST_DATA_DIR: /home/runner/work/test_data/
     steps:
     - uses: actions/checkout@v2
     - name: Download test data
       run: |
         mkdir -p /home/runner/work/test_data
         gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
-        gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O /home/runner/work/test_data/
-        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O /home/runner/work/test_data/
     - name: Test with pytest
       run: |
+        echo $TEST_DATA_DIR
+        which pytest
         pytest
-    - name: Build Python package
-      if: github.event_name == 'release'
-      run: >
-        GEODATASET_RELEASE="${GITHUB_REF#refs/tags/}"
-        python setup.py sdist bdist_wheel
-    - name: Publish Python package
-      if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
