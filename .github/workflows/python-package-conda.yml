@@ -44,10 +44,10 @@ jobs:
       - name: Cache
         uses: actions/cache@v2
         with:
-          path: /netcdf
+          path: /home/runner/work/test_data
           key: 1
       - name: Chech data dir content
-        run: ls -l /netcdf
+        run: ls -l /home/runner/work/test_data
       - uses: actions/checkout@v2
       - name: Test with pytest
         run: |
