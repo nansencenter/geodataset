@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: Test Geodataset and publish
 
 on:
   push:
@@ -7,50 +7,49 @@ on:
 
 jobs:
   - test:
-    runs-on: ubuntu-latest
-    env:
-      TEST_DATA_DIR: /netcdf
-    container:
-      image: nansencenter/geodataset_base:latest
+      runs-on: ubuntu-latest
       env:
-        TEST_DATA_DIR: ${{ env.TEST_DATA_DIR }}
-    steps:
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.TEST_DATA_DIR }}
-          key: 0
-        id: cache
-      - name: Download test data
-        run : |
-          mkdir -p $TEST_DATA_DIR
-          gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1S0OLfr6DdJIflZC6mVbYTjKHj4XZ4TKg -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1RD9V1iS-tS0QIdg2IUyX_KR4PK3SpbFl -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1KGapeF6EG4h8gGPxNbkyRnRBYu3i7bdD -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O $TEST_DATA_DIR/
-          gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O $TEST_DATA_DIR/
-        if: steps.cache.outputs.cache-hit != 'true'
-      - uses: actions/checkout@v2
-      - name: Test with pytest
-        run: |
-          pytest
+        TEST_DATA_DIR: /netcdf
+      container:
+        image: nansencenter/geodataset_base:latest
+        env:
+          TEST_DATA_DIR: ${{ env.TEST_DATA_DIR }}
+      steps:
+        - name: Cache
+          uses: actions/cache@v2
+          with:
+            path: ${{ env.TEST_DATA_DIR }}
+            key: 0
+          id: cache
+        - name: Download test data
+          run : |
+            mkdir -p $TEST_DATA_DIR
+            gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1S0OLfr6DdJIflZC6mVbYTjKHj4XZ4TKg -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1RD9V1iS-tS0QIdg2IUyX_KR4PK3SpbFl -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1KGapeF6EG4h8gGPxNbkyRnRBYu3i7bdD -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O $TEST_DATA_DIR/
+            gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O $TEST_DATA_DIR/
+          if: steps.cache.outputs.cache-hit != 'true'
+        - uses: actions/checkout@v2
+        - name: Test with pytest
+          run: pytest
   - publish:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-    container:
-      image: nansencenter/geodataset_base:latest
-    - name: Build Python package
+      needs: test
+      runs-on: ubuntu-latest
       if: github.event_name == 'release'
-      run: >
-        GEODATASET_RELEASE="${GITHUB_REF#refs/tags/}"
-        python setup.py sdist bdist_wheel
-    - name: Publish Python package
-      if: github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
+      container:
+        image: nansencenter/geodataset_base:latest
+      - name: Build Python package
+        if: github.event_name == 'release'
+        run: >
+          GEODATASET_RELEASE="${GITHUB_REF#refs/tags/}"
+          python setup.py sdist bdist_wheel
+      - name: Publish Python package
+        if: github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
