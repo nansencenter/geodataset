@@ -40,9 +40,12 @@ jobs:
       image: nansencenter/geodataset_base:latest
       env:
         TEST_DATA_DIR: /netcdf
-      volumes:
-        - /home/runner/work/test_data:/netcdf
     steps:
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: /netcdf
+          key: 1
       - name: Chech data dir content
         run: ls -l /netcdf
       - uses: actions/checkout@v2
