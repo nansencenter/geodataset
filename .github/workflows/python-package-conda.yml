@@ -16,7 +16,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v2
         with:
-          path: ${{ jobs.test.container.env.TEST_DATA_DIR }}
+          path: ${{ env.TEST_DATA_DIR }}
           key: 0
       - name: Download test data
         run : |
