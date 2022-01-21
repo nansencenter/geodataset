@@ -6,7 +6,7 @@ on:
     types: [released]
 
 jobs:
-  test:
+  - test:
     runs-on: ubuntu-latest
     env:
       TEST_DATA_DIR: /netcdf
@@ -38,7 +38,7 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
-  publish:
+  - publish:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
