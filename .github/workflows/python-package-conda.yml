@@ -12,10 +12,17 @@ jobs:
       - name: Install gdown
         run: |
           pip install gdown 
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: /home/runner/work/test_data
+          key: 0
+        id: cache
       - name: Download test data
         run : |
           mkdir -p /home/runner/work/test_data
           gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
+        if: steps.cache.outputs.cache-hit != 'true'
   test:
     needs: get_test_data
     runs-on: ubuntu-latest
