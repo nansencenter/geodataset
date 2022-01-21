@@ -6,20 +6,26 @@ on:
     types: [released]
 
 jobs:
-  test-build-publish:
+  test:
     runs-on: ubuntu-latest
     container:
       image: nansencenter/geodataset_base:latest
       env:
-          TEST_DATA_DIR: /home/runner/work/test_data/
+          TEST_DATA_DIR: /netcdf
     steps:
     - uses: actions/checkout@v2
     - name: Download test data
       run: |
-        mkdir -p /home/runner/work/test_data
-        gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O /home/runner/work/test_data/
+        mkdir -p $TEST_DATA_DIR
+        gdown https://drive.google.com/uc?id=1NmJeldiS5XlIwciDhej8Mas8g1Ng9T6n -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1j1zkyNDM9EwcvgipMskhuRDoe6mYBhnN -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1GvwVxIPi4S_0uJDiSeXURYKu8fCQlLxx -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1S0OLfr6DdJIflZC6mVbYTjKHj4XZ4TKg -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1RD9V1iS-tS0QIdg2IUyX_KR4PK3SpbFl -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1KGapeF6EG4h8gGPxNbkyRnRBYu3i7bdD -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1dRo0gfoJCinnOhA96YQpqnddhbdW_Z09 -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1JReSKt2nBKAf9mRwrbnoLQPewFqK2l93 -O $TEST_DATA_DIR/
+        gdown https://drive.google.com/uc?id=1c1nyBFjNuM8njurt5FcK49Bz14R_O2Jx -O $TEST_DATA_DIR/
     - name: Test with pytest
       run: |
-        echo $TEST_DATA_DIR
-        which pytest
         pytest
