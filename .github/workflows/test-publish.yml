@@ -41,10 +41,9 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-    container:
-      image: nansencenter/geodataset_base:latest
+    #if: github.event_name == 'release'
     steps:
+      - uses: actions/checkout@v2
       - name: Build Python package
         if: github.event_name == 'release'
         run: >
