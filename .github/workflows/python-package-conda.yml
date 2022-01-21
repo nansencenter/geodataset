@@ -18,7 +18,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.TEST_DATA_DIR }}
-          key: 1
+          key: 2
         id: cache
       - name: Download test data
         run : |
@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /home/runner/work/test_data
-          key: 1
+          key: 2
       - name: Chech data dir content
         run: ls -l /home/runner/work/test_data
       - uses: actions/checkout@v2
