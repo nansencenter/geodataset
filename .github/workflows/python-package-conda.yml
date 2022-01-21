@@ -7,6 +7,7 @@ on:
 
 jobs:
   test:
+    id: test_job
     runs-on: ubuntu-latest
     container:
       image: nansencenter/geodataset_base:latest
@@ -16,7 +17,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v2
         with:
-          path: ${{ test.container.env.TEST_DATA_DIR }}
+          path: ${{ test_job.container.env.TEST_DATA_DIR }}
           key: 0
         id: cache
       - name: Download test data
