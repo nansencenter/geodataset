@@ -545,7 +545,7 @@ class GeoDatasetRead(GeoDatasetBase):
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
         nb_y = nbo.mesh_info.nodes_y
-        t = nbo.mesh_info.get_indices()
+        t = nbo.mesh_info.indices
         if on_elements:
             nb_x, nb_y = [i[t].mean(axis=1) for i in [nb_x, nb_y]]
         
