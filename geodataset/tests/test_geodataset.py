@@ -462,10 +462,9 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         mock_fng.return_value = np.array([[1,2],[3,4]])
 
         nbo = MagicMock()
-        nbo.mesh_info.get_nodes_xy.return_value = (
-            np.array([8569000.1, 8569000.2, 8569000.3]), 
-            np.array([-8569000.1, -8569000.2, -8569000.3]))
-        nbo.mesh_info.get_indices.return_value = np.array([[1,2,3],])
+        nbo.mesh_info.nodes_x = np.array([8569000.1, 8569000.2, 8569000.3])
+        nbo.mesh_info.nodes_y = np.array([-8569000.1, -8569000.2, -8569000.3])
+        nbo.mesh_info.get_indices.return_value = np.array([[0,1,2],])
         nbo.mesh_info.projection.pyproj = pyproj.Proj(3411)
 
         with GeoDatasetRead() as ds:
