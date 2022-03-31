@@ -126,10 +126,10 @@ class GeoDatasetWrite(GeoDatasetBase):
         pvar = self.createVariable(self.grid_mapping_variable, 'i1')
         pvar.setncatts(self.get_grid_mapping_ncattrs())
 
-    def set_time_variables_dimensions(self, time_data, time_atts, time_bnds_data):
+    def set_time_variable(self, time_data, time_atts):
         """
-        set the temporal dimensions (time, nv)
-        and variables (time, time_bnds)
+        set the temporal dimensions: time
+        and variables: time
 
         Parameters:
         -----------
@@ -137,25 +137,32 @@ class GeoDatasetWrite(GeoDatasetBase):
             data for time variable
         time_atts : dict
             netcdf attributes for time variable
-        time_bnds_data : np.array
-            data for time_bnds variable
-        time_bnds_atts : dict
-            netcdf attributes for time_bnds variable
         """
         # dimensions
         self.createDimension('time', None)#time should be unlimited
-        self.createDimension('nv', 2)
         # time should have units and a calendar attribute
         ncatts = dict(**time_atts)
         ncatts['calendar'] = time_atts.get('calendar', 'standard')
-        units = time_atts['units']
         # time var
         tvar = self.createVariable('time', 'f8', ('time',), zlib=True)
         tvar.setncatts(ncatts)
         tvar[:] = time_data
-        # time_bnds var - just needs units
+
+    def set_time_bnds_variable(self, time_atts, time_bnds_data):
+        """
+        set the temporal dimension: nv
+        and variable: time_bnds
+
+        Parameters:
+        -----------
+        time_atts : dict
+            netcdf attributes for time variable
+        time_bnds_data : np.array
+            data for time_bnds variable
+        """
+        self.createDimension('nv', 2)
         tbvar = self.createVariable('time_bnds', 'f8', ('time', 'nv'), zlib=True)
-        tbvar.setncattr('units', units)
+        tbvar.setncattr('units', time_atts['units'])
         tbvar[:] = time_bnds_data
 
     def set_xy_dims(self, x, y):
@@ -200,7 +207,7 @@ class GeoDatasetWrite(GeoDatasetBase):
             dst_var.setncattr('units', units)
             dst_var[:] = data
 
-    def set_variable(self, vname, data, dims, atts, dtype='f4'):
+    def set_variable(self, vname, data, dims, atts, dtype=np.float32):
         """
         set variable data and attributes
 
@@ -214,18 +221,17 @@ class GeoDatasetWrite(GeoDatasetBase):
             list of dimension names for the variable
         atts : dict
             netcdf attributes to set
-        dtype : str
-            netcdf data type for new variable (eg 'f4' or 'f8')
+        dtype : type
+            netcdf data type for new variable (eg np.float32 or np.double)
         """
-        type_converter = dict(f4=np.float32, f8=np.double)[dtype]
         ncatts = {k:v for k,v in atts.items() if k != '_FillValue'}
         kw = dict(zlib=True)# use compression
         if '_FillValue' in atts:
             # needs to be a keyword for createVariable and of right data type
-            kw['fill_value'] = type_converter(atts['_FillValue'])
+            kw['fill_value'] = dtype(atts['_FillValue'])
         if 'missing_value' in atts:
             # needs to be of right data type
-            ncatts['missing_value'] = type_converter(atts['missing_value'])
+            ncatts['missing_value'] = dtype(atts['missing_value'])
         dst_var = self.createVariable(vname, dtype, dims, **kw)
         ncatts['grid_mapping'] = self.grid_mapping_variable
         dst_var.setncatts(ncatts)
