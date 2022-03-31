@@ -127,7 +127,6 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
             createVariable=DEFAULT,
             )
     def test_set_lonlat(self, **kwargs):
-
         slon = (2,2)
         slat = (3,3)
         lon = np.random.normal(size=slon)
@@ -155,19 +154,36 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
             createDimension=DEFAULT,
             createVariable=DEFAULT,
             )
-    def test_set_time_variables_dimensions(self, **kwargs):
+    def test_set_time_variable(self, **kwargs):
         nc = GeoDatasetWrite()
         nt = 3
-        time_inds = [1,2]
+        time = np.random.normal(size=(nt,))
+        time_atts = dict(a1='A1', a2='A2', units='units')
+
+        nc.set_time_variable(time, time_atts)
+        self.assert_mock_has_calls(kwargs['createDimension'], [call('time', None)])
+        req_calls = [
+                call('time', 'f8', ('time',), zlib=True), 
+                call().setncatts({'a1': 'A1', 'a2': 'A2', 'units': 'units', 'calendar': 'standard'}),
+                call().__setitem__(slice(None, None, None), time),
+                ]
+        self.assert_mock_has_calls(kwargs['createVariable'], req_calls)
+    
+    @patch.multiple(GeoDatasetWrite,
+            __init__=MagicMock(return_value=None),
+            createDimension=DEFAULT,
+            createVariable=DEFAULT,
+            )
+    def test_set_time_bnds_variable(self, **kwargs):
+        nc = GeoDatasetWrite()
+        nt = 3
         time = np.random.normal(size=(nt,))
         time_bnds = np.random.normal(size=(nt,2))
         time_atts = dict(a1='A1', a2='A2', units='units')
 
-        nc.set_time_variables_dimensions(time, time_atts, time_bnds)
-        self.assert_mock_has_calls(kwargs['createDimension'], [call('time', None), call('nv', 2)])
+        nc.set_time_bnds_variable(time_atts, time_bnds)
+        self.assert_mock_has_calls(kwargs['createDimension'], [call('nv', 2)])
         req_calls = [
-                call('time', 'f8', ('time',), zlib=True), call().setncatts({'a1': 'A1', 'a2': 'A2', 'units': 'units', 'calendar': 'standard'}),
-                call().__setitem__(slice(None, None, None), time),
                 call('time_bnds', 'f8', ('time', 'nv'), zlib=True),
                 call().setncattr('units', 'units'),
                 call().__setitem__(slice(None, None, None), time_bnds),
@@ -186,12 +202,12 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         nc.grid_mapping_variable = 'gmn'
         atts = dict(a1='A1', a2='A2', _FillValue='fv')
         f4.return_value = 'fv4'
-        nc.set_variable('vname', 'data', 'dims', atts, dtype='f4')
+        nc.set_variable('vname', 'data', 'dims', atts, dtype=np.float32)
         f4.assert_called_once_with('fv')
         f8.assert_not_called()
 
         req_calls = [
-                call('vname', 'f4', 'dims', fill_value='fv4', zlib=True),
+                call('vname', np.float32, 'dims', fill_value='fv4', zlib=True),
                 call().setncatts({'a1': 'A1', 'a2': 'A2', 'grid_mapping': 'gmn'}),
                 call().__setitem__(slice(None, None, None), 'data'),
                 ]
@@ -210,11 +226,11 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         atts = dict(a1='A1', a2='A2', missing_value='fv')
         f8.return_value = 'fv8'
 
-        nc.set_variable('vname', 'data', 'dims', atts, dtype='f8')
+        nc.set_variable('vname', 'data', 'dims', atts, dtype=np.double)
         f8.assert_called_once_with('fv')
         f4.assert_not_called()
         req_calls = [
-                call('vname', 'f8', 'dims', zlib=True),
+                call('vname', np.double, 'dims', zlib=True),
                 call().setncatts({
                     'a1': 'A1', 
                     'a2': 'A2', 
