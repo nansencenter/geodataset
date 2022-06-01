@@ -66,3 +66,48 @@ class OsisafDriftersNextsim(CustomDatasetRead):
 class SmosIceThickness(CustomDatasetRead):
     pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
+
+
+class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
+
+    grid_mapping = (pyproj.CRS.from_proj4(
+            '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
+            '+ellps=WGS84 +units=m +no_defs'), 'absent')
+
+    @staticmethod
+    def get_xy_arrays():
+        """
+        Grid info from
+        https://nsidc.org/data/polar-stereo/ps_grids.html
+        see table 6
+        """
+        x0 = -3850.
+        x1 = 3750.
+        nx = 608
+        y1 = 5850.
+        y0 = -5350
+        ny = 896
+
+        # get corner points
+        qx = np.linspace(x0, x1, nx + 1)
+        qy = np.linspace(y0, y1, ny + 1)
+
+        # convert to grid of mid points
+        return np.meshgrid(
+                .5e3 * (qx[:-1] + qx[1:]),
+                .5e3 * (qy[:-1] + qy[1:]),
+                )
+
+    def get_lonlat_arrays(self):
+        return self.projection(
+                *self.get_xy_arrays(), inverse=True)
+
+
+class UniBremenMERISAlbedoMPFPre2021(UniBremenMERISAlbedoMPFBase):
+    """ older filename format """
+    pattern = re.compile(r'mpd_\d{8}.nc')
+
+
+class UniBremenMERISAlbedoMPF(UniBremenMERISAlbedoMPFBase):
+    """ after 2021 filenames have _NR suffix """
+    pattern = re.compile(r'mpd_\d{8}_NR.nc')
