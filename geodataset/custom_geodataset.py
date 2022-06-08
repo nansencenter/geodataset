@@ -1,5 +1,6 @@
 import os
 import re
+import datetime as dt
 
 import numpy as np
 import pyproj
@@ -101,6 +102,19 @@ class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
     def get_lonlat_arrays(self):
         return self.projection(
                 *self.get_xy_arrays(), inverse=True)
+
+    @property
+    def datetimes(self):
+        """
+        Get datetimes manually from filename
+
+        Returns:
+        --------
+        datetimes : list(datetime.datetime)
+            all the time values converted to datetime objects
+        """
+        bname = os.path.basename(self.filepath())
+        return [dt.datetime.strptime(bname[4:12], '%Y%m%d')]
 
 
 class UniBremenMERISAlbedoMPFPre2021(UniBremenMERISAlbedoMPFBase):

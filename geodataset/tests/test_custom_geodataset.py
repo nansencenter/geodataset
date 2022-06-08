@@ -17,6 +17,8 @@ from geodataset.tests.base_for_tests import BaseForTests
 
 
 class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
+    nc_files = glob.glob(os.path.join(
+        os.environ['TEST_DATA_DIR'], "mpd*.nc"))
 
     def test_get_xy_arrays(self):
         x, y = UniBremenMERISAlbedoMPFBase.get_xy_arrays()
@@ -42,6 +44,15 @@ class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
         self.assertEqual(lat, 'lat')
         obj.get_xy_arrays.assert_called_once_with()
         obj.projection.assert_called_once_with('x', 'y', inverse=True)
+
+    def test_datetimes(self):
+        for f, dto in zip(self.nc_files, [
+            dt.datetime(2017,5,1),
+            dt.datetime(2021,5,31),
+            ]):
+            with open_netcdf(f) as ds:
+                self.assertEqual(
+                        ds.datetimes, [dto])
 
 
 if __name__ == "__main__":

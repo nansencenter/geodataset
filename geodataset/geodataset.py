@@ -11,6 +11,7 @@ from xarray.core.variable import MissingDimensionsError
 
 from geodataset.utils import InvalidDatasetError, fill_nan_gaps
 
+
 class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
     lonlat_names = None
