@@ -8,6 +8,7 @@ import pyproj
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
 
+
 class CustomDatasetRead(GeoDatasetRead):
     pattern = None
     def _check_input_file(self):
