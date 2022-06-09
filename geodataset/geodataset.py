@@ -19,7 +19,6 @@ class GeoDatasetBase(Dataset):
     time_name = 'time'
     is_lonlat_2d = True
 
-
     def __init__(self, *args, **kwargs):
         """
         Initialise the object using netCDF4.Dataset()
@@ -448,7 +447,7 @@ class GeoDatasetRead(GeoDatasetBase):
         --------
         * area (float)
         """
-        lon, lat = self.get_lonlat_arrays(ij_range)
+        lon, lat = self.get_lonlat_arrays(ij_range=ij_range)
         x, y = mapping(lon, lat)
         dy, dx = [np.max([
             np.abs(np.mean(z[:, 2]-z[:, 1])), 
