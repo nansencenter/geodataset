@@ -14,6 +14,7 @@ from geodataset.geodataset import GeoDatasetBase, GeoDatasetWrite, GeoDatasetRea
 from geodataset.utils import InvalidDatasetError
 from geodataset.tests.base_for_tests import BaseForTests
 
+
 class GeodatasetTestBase(BaseForTests):
     def setUp(self):
         super().setUp()
@@ -24,6 +25,7 @@ class GeodatasetTestBase(BaseForTests):
         self.osisaf_max = 49.51771
         self.moorings_filename = os.path.join(os.environ['TEST_DATA_DIR'], "Moorings.nc")
         self.moorings_var = 'sic'
+
 
 class GeoDatasetBaseTest(GeodatasetTestBase):
     @patch.multiple(GeoDatasetBase, __init__=MagicMock(return_value=None), variables=DEFAULT)

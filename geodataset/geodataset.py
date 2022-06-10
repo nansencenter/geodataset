@@ -11,13 +11,13 @@ from xarray.core.variable import MissingDimensionsError
 
 from geodataset.utils import InvalidDatasetError, fill_nan_gaps
 
+
 class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
     lonlat_names = None
     projection = None
     time_name = 'time'
     is_lonlat_2d = True
-
 
     def __init__(self, *args, **kwargs):
         """
@@ -447,7 +447,7 @@ class GeoDatasetRead(GeoDatasetBase):
         --------
         * area (float)
         """
-        lon, lat = self.get_lonlat_arrays(ij_range)
+        lon, lat = self.get_lonlat_arrays(ij_range=ij_range)
         x, y = mapping(lon, lat)
         dy, dx = [np.max([
             np.abs(np.mean(z[:, 2]-z[:, 1])), 

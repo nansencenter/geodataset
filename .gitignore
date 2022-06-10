@@ -1,4 +1,5 @@
 *.pyc
+*.sw?
 *.npz
 *.nc
 .ipynb_checkpoints/

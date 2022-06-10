@@ -1,11 +1,13 @@
 import os
 import re
+import datetime as dt
 
 import numpy as np
 import pyproj
 
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
+
 
 class CustomDatasetRead(GeoDatasetRead):
     pattern = None
@@ -66,3 +68,92 @@ class OsisafDriftersNextsim(CustomDatasetRead):
 class SmosIceThickness(CustomDatasetRead):
     pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
+
+
+class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
+
+    grid_mapping = (pyproj.CRS.from_proj4(
+            '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
+            '+ellps=WGS84 +units=m +no_defs'), 'absent')
+
+    @staticmethod
+    def get_xy_arrays(ij_range=None):
+        """
+        Grid info from
+        https://nsidc.org/data/polar-stereo/ps_grids.html
+        see table 6
+
+        Parameters:
+        -----------
+        ij_range : list(int)
+            - [i0, i1, j0, j1]
+            - pixel indices for subsetting
+            - return x[i0:i1+1,j0:j1+1], y[i0:i1+1,j0:j1+1]
+                instead of full arrays
+
+        Returns:
+        --------
+        x : numpy.ndarray
+            2D array with x coordinates of pixel centers
+        y : numpy.ndarray
+            2D array with y coordinates of pixel centers
+        """
+        x0 = -3850.
+        x1 = 3750.
+        nx = 608
+        y1 = 5850.
+        y0 = -5350
+        ny = 896
+
+        # get corner points
+        qx = np.linspace(x0, x1, nx + 1)
+        qy = np.linspace(y0, y1, ny + 1)
+
+        # convert to grid of mid points
+        px, py = np.meshgrid(
+                .5e3 * (qx[:-1] + qx[1:]),
+                .5e3 * (qy[:-1] + qy[1:]),
+                )
+        if ij_range is not None:
+            i0, i1, j0, j1 = ij_range
+            return px[i0:i1+1,j0:j1+1], py[i0:i1+1,j0:j1+1]
+        return px, py
+
+    def get_lonlat_arrays(self, **kwargs):
+        """
+        Parameters:
+        -----------
+        kwargs for UniBremenMERISAlbedoMPFBase.get_xy_arrays
+
+        Returns:
+        --------
+        lon : numpy.ndarray
+            2D array
+        lat : numpy.ndarray
+            2D array
+        """
+        return self.projection(
+                *self.get_xy_arrays(**kwargs), inverse=True)
+
+    @property
+    def datetimes(self):
+        """
+        Get datetimes manually from filename
+
+        Returns:
+        --------
+        datetimes : list(datetime.datetime)
+            all the time values converted to datetime objects
+        """
+        bname = os.path.basename(self.filepath())
+        return [dt.datetime.strptime(bname[4:12], '%Y%m%d')]
+
+
+class UniBremenMERISAlbedoMPFPre2021(UniBremenMERISAlbedoMPFBase):
+    """ older filename format """
+    pattern = re.compile(r'mpd_\d{8}.nc')
+
+
+class UniBremenMERISAlbedoMPF(UniBremenMERISAlbedoMPFBase):
+    """ after 2021 filenames have _NR suffix """
+    pattern = re.compile(r'mpd_\d{8}_NR.nc')
