@@ -7,6 +7,19 @@ import pyproj
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
 
+
+class ArcMFCModelFile(GeoDatasetRead):
+    """
+    geodataset for ArcMFC model files
+
+    filenames vary from product to product so just inherit from GeoDatasetRead
+    and don't set pattern
+    """
+    grid_mapping = pyproj.CRS.from_proj4(
+        '+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-45 +x_0=0 +y_0=0'
+        ' +R=6378273 +ellps=sphere +units=m +no_defs'), 'absent'
+
+
 class CustomDatasetRead(GeoDatasetRead):
     pattern = None
     def _check_input_file(self):
