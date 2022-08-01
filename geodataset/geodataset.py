@@ -444,7 +444,7 @@ class GeoDatasetRead(GeoDatasetBase):
         --------
         * area (float)
         """
-        lon, lat = self.get_lonlat_arrays(ij_range)
+        lon, lat = self.get_lonlat_arrays(ij_range=ij_range)
         x, y = mapping(lon, lat)
         dy, dx = [np.max([
             np.abs(np.mean(z[:, 2]-z[:, 1])), 
