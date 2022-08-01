@@ -9,8 +9,7 @@ from geodataset.custom_geodataset import (
     NerscIceType, 
     OsisafDriftersNextsim,
     SmosIceThickness,
-    UniBremenMERISAlbedoMPFPre2021,
-    UniBremenMERISAlbedoMPF,
+    UniBremenAlbedoMPF,
 )
 
 custom_read_classes = [
@@ -22,8 +21,7 @@ custom_read_classes = [
     NerscIceType,
     OsisafDriftersNextsim,
     SmosIceThickness,
-    UniBremenMERISAlbedoMPFPre2021,
-    UniBremenMERISAlbedoMPF,
+    UniBremenAlbedoMPF,
     # always last:
     GeoDatasetRead,
 ]

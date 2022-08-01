@@ -10,17 +10,17 @@ import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
 
-from geodataset.custom_geodataset import UniBremenMERISAlbedoMPFBase
+from geodataset.custom_geodataset import UniBremenAlbedoMPF
 
 from geodataset.utils import InvalidDatasetError
 from geodataset.tests.base_for_tests import BaseForTests
 
 
-class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
+class UniBremenAlbedoMPFBaseTest(BaseForTests):
 
     def test_get_xy_arrays_1(self):
         """ test get_xy_arrays with default options """
-        x, y = UniBremenMERISAlbedoMPFBase.get_xy_arrays()
+        x, y = UniBremenAlbedoMPF.get_xy_arrays()
         dx = x[0,1] - x[0,0]
         dy = y[1,0] - y[0,0]
         self.assertEqual(dx, 12500.)
@@ -32,18 +32,18 @@ class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
 
     def test_get_xy_arrays_2(self):
         """ test get_xy_arrays with ij_range passed """
-        x0, y0 = UniBremenMERISAlbedoMPFBase.get_xy_arrays()
-        x, y = UniBremenMERISAlbedoMPFBase.get_xy_arrays(ij_range=[3,10,6,21])
+        x0, y0 = UniBremenAlbedoMPF.get_xy_arrays()
+        x, y = UniBremenAlbedoMPF.get_xy_arrays(ij_range=[3,10,6,21])
         self.assertTrue(np.allclose(x0[3:11,6:22], x))
         self.assertTrue(np.allclose(y0[3:11,6:22], y))
 
-    @patch.multiple(UniBremenMERISAlbedoMPFBase,
+    @patch.multiple(UniBremenAlbedoMPF,
             __init__=MagicMock(return_value=None),
             get_xy_arrays=MagicMock(return_value=('x', 'y')),
             projection=MagicMock(return_value=('lon', 'lat')),
             )
     def test_get_lonlat_arrays(self):
-        obj = UniBremenMERISAlbedoMPFBase()
+        obj = UniBremenAlbedoMPF()
 
         lon, lat = obj.get_lonlat_arrays(a=1, b=2)
         self.assertEqual(lon, 'lon')
@@ -51,7 +51,7 @@ class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
         obj.get_xy_arrays.assert_called_once_with(a=1, b=2)
         obj.projection.assert_called_once_with('x', 'y', inverse=True)
 
-    @patch.multiple(UniBremenMERISAlbedoMPFBase,
+    @patch.multiple(UniBremenAlbedoMPF,
             __init__=MagicMock(return_value=None),
             filepath=DEFAULT,
             )
@@ -59,11 +59,11 @@ class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
         """ test for older filename """
         dto = dt.datetime(2017,5,1)
         kwargs['filepath'].return_value = dto.strftime('a/b/mpd_%Y%m%d.nc')
-        obj = UniBremenMERISAlbedoMPFBase()
+        obj = UniBremenAlbedoMPF()
         self.assertEqual(obj.datetimes, [dto])
 
 
-    @patch.multiple(UniBremenMERISAlbedoMPFBase,
+    @patch.multiple(UniBremenAlbedoMPF,
             __init__=MagicMock(return_value=None),
             filepath=DEFAULT,
             )
@@ -71,7 +71,7 @@ class UniBremenMERISAlbedoMPFBaseTest(BaseForTests):
         """ test for newer filename """
         dto = dt.datetime(2021,5,1)
         kwargs['filepath'].return_value = dto.strftime('a/b/mpd_%Y%m%d_NR.nc')
-        obj = UniBremenMERISAlbedoMPFBase()
+        obj = UniBremenAlbedoMPF()
         self.assertEqual(obj.datetimes, [dto])
 
 
