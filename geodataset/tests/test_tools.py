@@ -32,7 +32,7 @@ class ToolsTests(BaseForTests):
             with self.subTest(nc_file=nc_file):
                 with open_netcdf(nc_file) as ds:
                     if not ds.is_lonlat_2d:
-                        # skip for eg OsisafDriftersNextsim (3d lon,lat)
+                        # skip for eg OsisafDriftersNextsim (lon,lat are 3d, depending on time also)
                         continue
                     lon, lat = ds.get_lonlat_arrays()
                 print(nc_file, len(lon.shape))

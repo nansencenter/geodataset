@@ -88,7 +88,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
     grid_mapping = (pyproj.CRS.from_proj4(
             '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
             '+ellps=WGS84 +units=m +no_defs'), 'absent')
-    pattern = re.compile(r'mpd_\d{8}.nc|mpd_\d{8}_NR.nc')
+    pattern = re.compile(r'mpd_\d{8}.nc|mpd_\d{8}_NR.nc') # after 2020, filenames have _NR suffix
 
     @staticmethod
     def get_xy_arrays(ij_range=None):
