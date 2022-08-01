@@ -83,11 +83,12 @@ class SmosIceThickness(CustomDatasetRead):
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
 
 
-class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
+class UniBremenAlbedoMPF(CustomDatasetRead):
 
     grid_mapping = (pyproj.CRS.from_proj4(
             '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
             '+ellps=WGS84 +units=m +no_defs'), 'absent')
+    pattern = re.compile(r'mpd_\d{8}.nc|mpd_\d{8}_NR.nc')
 
     @staticmethod
     def get_xy_arrays(ij_range=None):
@@ -136,7 +137,7 @@ class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
         """
         Parameters:
         -----------
-        kwargs for UniBremenMERISAlbedoMPFBase.get_xy_arrays
+        kwargs for UniBremenAlbedoMPF.get_xy_arrays
 
         Returns:
         --------
@@ -160,13 +161,3 @@ class UniBremenMERISAlbedoMPFBase(CustomDatasetRead):
         """
         bname = os.path.basename(self.filepath())
         return [dt.datetime.strptime(bname[4:12], '%Y%m%d')]
-
-
-class UniBremenMERISAlbedoMPFPre2021(UniBremenMERISAlbedoMPFBase):
-    """ older filename format """
-    pattern = re.compile(r'mpd_\d{8}.nc')
-
-
-class UniBremenMERISAlbedoMPF(UniBremenMERISAlbedoMPFBase):
-    """ after 2021 filenames have _NR suffix """
-    pattern = re.compile(r'mpd_\d{8}_NR.nc')
