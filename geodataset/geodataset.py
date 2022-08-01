@@ -1,5 +1,5 @@
 import datetime as dt
-from functools import lru_cache
+from functools import cached_property
 
 from netCDF4 import Dataset
 import netcdftime
@@ -60,7 +60,7 @@ class GeoDatasetBase(Dataset):
         datetimes = [netcdftime.num2date(t, units, calendar=cal) for t in tdata]
         return np.array(datetimes).reshape(tdata.shape)
 
-    @property
+    @cached_property
     def is_lonlat_dim(self):
         """
         Returns:
@@ -70,7 +70,7 @@ class GeoDatasetBase(Dataset):
         """
         return (self.lonlat_names[0] in self.dimensions)
 
-    @property
+    @cached_property
     def datetimes(self):
         """
         Returns:
@@ -251,8 +251,7 @@ class GeoDatasetWrite(GeoDatasetBase):
 class GeoDatasetRead(GeoDatasetBase):
     """ Wrapper for netCDF4.Dataset for common input tasks """
 
-    @property
-    @lru_cache(1)
+    @cached_property
     def lonlat_names(self):
         """ Get names of latitude longitude following CF and ACDD standards 
         
@@ -275,8 +274,7 @@ class GeoDatasetRead(GeoDatasetBase):
                 return lon_var_name, lat_var_name
         raise InvalidDatasetError
 
-    @property
-    @lru_cache(1)
+    @cached_property
     def variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
         
@@ -295,7 +293,7 @@ class GeoDatasetRead(GeoDatasetBase):
                 var_names.remove(bad_name)
         return var_names
 
-    @property
+    @cached_property
     def projection(self):
         """ Read projection of the dataset from self.grid_mapping
         
@@ -306,7 +304,7 @@ class GeoDatasetRead(GeoDatasetBase):
         """
         return pyproj.Proj(self.grid_mapping[0])
 
-    @property
+    @cached_property
     def grid_mapping_variable(self):
         """ Read name of the grid mapping variable from self.grid_mapping
         
@@ -317,8 +315,7 @@ class GeoDatasetRead(GeoDatasetBase):
         """
         return self.grid_mapping[1]
     
-    @property
-    @lru_cache(1)
+    @cached_property
     def grid_mapping(self):
         """ Load CRS and grid mapping variable name from CF-attrinbutes OR from lon/lat
         If grid mapping cannot be loaded from file, InvalidDatasetError is raised

@@ -48,11 +48,16 @@ class GeoDatasetBaseTest(GeodatasetTestBase):
 
 class GeoDatasetWriteTest(GeodatasetTestBase):
     @patch.multiple(GeoDatasetWrite, __init__=MagicMock(return_value=None), dimensions=DEFAULT)
-    def test_is_lonlat_dim(self, **kwargs):
+    def test_is_lonlat_dim_1(self, **kwargs):
         nc = GeoDatasetWrite()
         nc.lonlat_names = ('lon', 'lat')
         nc.dimensions = ('x', 'y')
         self.assertFalse(nc.is_lonlat_dim)
+
+    @patch.multiple(GeoDatasetWrite, __init__=MagicMock(return_value=None), dimensions=DEFAULT)
+    def test_is_lonlat_dim_2(self, **kwargs):
+        nc = GeoDatasetWrite()
+        nc.lonlat_names = ('lon', 'lat')
         nc.dimensions = ('lon', 'lat')
         self.assertTrue(nc.is_lonlat_dim)
 

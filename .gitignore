@@ -2,6 +2,7 @@
 *.sw?
 *.npz
 *.nc
+*.sw?
 .ipynb_checkpoints/
 .vscode/
 NpsNextsim.mpp
