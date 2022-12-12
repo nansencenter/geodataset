@@ -527,7 +527,7 @@ class GeoDatasetRead(GeoDatasetBase):
             extrapolation distance (in pixels) to avoid land contamintation
         on_elements : bool
             perform interpolation on elements or nodes?
-        fill_value : bool
+        fill_value : float
             value for filling out of bound regions
         kwargs : dict
             dummy
@@ -536,14 +536,14 @@ class GeoDatasetRead(GeoDatasetBase):
         -------
         v_pro : 1D nupy.array
             values from netCDF interpolated on nextsim mesh
-        
         """
         # get self coordinates
         nc_lon, nc_lat = self.get_lonlat_arrays()
         if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
             raise ValueError('Can inteporlate only 2D data from netCDF file')
-        # get variable
-        nc_v = self.get_variable_array(var_name).filled(np.nan)
+        # get variable as float since interpolating
+        nc_v = self.get_variable_array(
+                var_name).astype(float).filled(np.nan)
 
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
@@ -573,6 +573,8 @@ class GeoDatasetRead(GeoDatasetBase):
             (nb_x < nc_x.max()) *
             (nb_y > nc_y.min()) *
             (nb_y < nc_y.max()))
-        v_pro = np.zeros(nb_x.shape) + fill_value
+        v_pro = np.full_like(nb_x, fill_value, dtype=float)
         v_pro[gpi] = rgi((nb_y[gpi], nb_x[gpi]))
+        # replace remaining NaN's (inside the domain, but not filled by fill_nan_gaps)
+        v_pro[np.isnan(v_pro)] = fill_value
         return v_pro
