@@ -328,12 +328,13 @@ class GeoDatasetRead(GeoDatasetBase):
             name of grid_mapping_variable or "absent"
 
         """
+        if self.is_lonlat_dim:
+            return pyproj.CRS(
+                '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
         crs, v = self.get_grid_mapping_from_cf_attrs()
-        if not crs:
-            crs, v = self.get_grid_mapping_from_lonlat()
-            if not crs:
-                raise InvalidDatasetError
-        return crs, v
+        if crs:
+            return crs, v
+        raise InvalidDatasetError
         
     def get_grid_mapping_from_cf_attrs(self):
         """ Load CRS and grid mapping var name from CF-attributes
@@ -356,47 +357,31 @@ class GeoDatasetRead(GeoDatasetBase):
                 return crs, var_name
         return None, None
 
-    def get_grid_mapping_from_lonlat(self):
-        """ Check if longitude and latitude are dimentions and return longlat CRS and "absent",
-        otherwise return None, None
-        
-        Returns
-        -------
-        csr : pyproj.CRS or None
-            coordinate reference system
-        v : str
-            name of grid mapping variable
+    @staticmethod
+    def parse_data_slice(data_slice, dims):
+        if data_slice is None:
+            return tuple(2 * [slice(None)])
+        return tuple([data_slice.get(d, slice(None)) for d in dims])
 
-        """
-        lon_is_dim = False
-        lat_is_dim = False
-        for d in self.dimensions:
-            if d in self.variables:
-                if 'standard_name' in self.variables[d].ncattrs():
-                    if self.variables[d].standard_name == 'longitude':
-                        lon_is_dim = True
-                    elif self.variables[d].standard_name == 'latitude':
-                        lat_is_dim = True
-            if lon_is_dim and lat_is_dim:
-                return pyproj.CRS(
-                    '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
-        return None, None
-
-    def get_lonlat_arrays(self, data_slice=slice(None)):
+    def get_lonlat_arrays(self, data_slice=None):
         """ Get array with longitude latidtude arrays 
         
         Parameters
         ----------
-        data_slice : slice or tuple of slices
-            for subsetting the domain
+        data_slice : dict
+            for subsetting the domain.
 
         Returns
         -------
         lonlat_arrays : 2 2D-numpy.arrays
             longitude and latitude
         """        
-        return [self.variables[name][data_slice]
-                for name in self.lonlat_names]
+        dslice = self.parse_data_slice(data_slice, self.spatial_dims)
+        if not self.is_lonlat_dim:
+            return [self.variables[name][dslice]
+                    for name in self.lonlat_names]
+        return np.meshgrid(*[self.variables[name][s]
+                for name,s in zip(self.lonlat_names, dslice)])
 
     def get_area_euclidean(self, mapping, **kwargs):
         """
@@ -484,7 +469,7 @@ class GeoDatasetRead(GeoDatasetBase):
 
     def get_var_for_nextsim(self, var_name, nbo, 
         distance=5, on_elements=True, fill_value=np.nan,
-        data_slice=slice(None)):
+        data_slice=None):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -499,8 +484,8 @@ class GeoDatasetRead(GeoDatasetBase):
             perform interpolation on elements or nodes?
         fill_value : float
             value for filling out of bound regions
-        kwargs : dict
-            dummy
+        data_slice : dict
+            for subsetting the domain.
         
         Returns
         -------
@@ -508,14 +493,15 @@ class GeoDatasetRead(GeoDatasetBase):
             values from netCDF interpolated on nextsim mesh
         """
         # get self coordinates
-        nc_lon, nc_lat = self.get_lonlat_arrays()
+        nc_lon, nc_lat = self.get_lonlat_arrays(data_slice=data_slice)
         if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
             raise ValueError('Can inteporlate only 2D data from netCDF file')
         # get variable as float since interpolating
         # - also squeeze to remove any singleton dimensions since fill_nan_gaps
         #   only works for 2D arrays
-        nc_v = np.squeeze(self.variables[var_name][data_slice]
-                ).astype(float).filled(np.nan)
+        ncvar = self.variables[var_name]
+        dslice = self.parse_data_slice(data_slice, ncvar.dimensions)
+        nc_v = np.squeeze(ncvar[dslice]).astype(float).filled(np.nan)
 
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
@@ -533,6 +519,9 @@ class GeoDatasetRead(GeoDatasetBase):
             nb_x, nb_y = self.projection(nb_x, nb_y)
         else:
             nc_x, nc_y = nc_lon[0], nc_lat[:,0]
+            # make sure the longitude branch cuts match
+            nb_x[nb_x < nc_x.min()] += 360.
+            nb_x[nb_x > nc_x.max()] -= 360.
         
         # fill nan gaps to avoid land contamination
         nc_v = fill_nan_gaps(nc_v, distance)
