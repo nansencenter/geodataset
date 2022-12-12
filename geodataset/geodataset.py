@@ -275,6 +275,25 @@ class GeoDatasetRead(GeoDatasetBase):
         raise InvalidDatasetError
 
     @cached_property
+    def spatial_dim_names(self):
+        """
+        Get names of (horizontal) spatial dimensions
+
+        Returns
+        -------
+        spat_dim_0 : str
+        spat_dim_1 : str
+        """
+        dims = []
+        for n in self.lonlat_names:
+            for d in self.variables[n].dimensions:
+                if d not in dims:
+                    dims += [d]
+        if len(dims) == 2:
+            return dims
+        raise InvalidDatasetError
+
+    @cached_property
     def variable_names(self):
         """ Find valid names of variables excluding names of dimensions, projections, etc
         
@@ -376,7 +395,7 @@ class GeoDatasetRead(GeoDatasetBase):
         lonlat_arrays : 2 2D-numpy.arrays
             longitude and latitude
         """        
-        dslice = self.parse_data_slice(data_slice, self.spatial_dims)
+        dslice = self.parse_data_slice(data_slice, self.spatial_dim_names)
         if not self.is_lonlat_dim:
             return [self.variables[name][dslice]
                     for name in self.lonlat_names]
