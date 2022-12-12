@@ -382,53 +382,23 @@ class GeoDatasetRead(GeoDatasetBase):
                     '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
         return None, None
 
-    def get_variable_array(
-        self, var_name, time_index=0, ij_range=(None, None, None, None)):
-        """ Get array with values from a given variable. 
-        If variable has time dimension, time_index is used.
-        
-        Parameters
-        ----------
-        var_name : str
-            name of variable
-        time_index: int
-            from which time layer to read data
-        ij_range : tuple with 4 ints
-            start/stop along i and j (y and x) axis
-
-        Returns
-        -------
-        array : 2D numpy.array
-            data from variable from time_index
-
-        """
-        if 'time' in self[var_name].dimensions:
-            return self[var_name][
-                time_index, ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
-        else:
-            return self[var_name][
-                ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
-
-
-    def get_lonlat_arrays(self, ij_range=(None, None, None, None)):
+    def get_lonlat_arrays(self, data_slice=slice(None)):
         """ Get array with longitude latidtude arrays 
         
         Parameters
         ----------
-        ij_range : tuple with 4 ints
-            start/stop along i and j (y and x) axis
+        data_slice : slice or tuple of slices
+            for subsetting the domain
 
         Returns
         -------
         lonlat_arrays : 2 2D-numpy.arrays
             longitude and latitude
-
         """        
-        return [
-            self.get_variable_array(name, ij_range) 
-            for name in self.lonlat_names]
+        return [self.variables[name][data_slice]
+                for name in self.lonlat_names]
 
-    def get_area_euclidean(self, mapping, ij_range=(None, None, None, None)):
+    def get_area_euclidean(self, mapping, **kwargs):
         """
         Calculates element area from netcdf file
         Assumes regular grid in the given projection
@@ -437,14 +407,13 @@ class GeoDatasetRead(GeoDatasetBase):
         -----------
         mapping : pyproj.Proj
             translate from lonlat to projected coordinates
-        ij_range : tuple with 4 ints
-            start/stop along i and j (y and x) axis
+        kwargs for GeoDatasetRead.get_lonlat_arrays
 
         Returns:
         --------
         * area (float)
         """
-        lon, lat = self.get_lonlat_arrays(ij_range=ij_range)
+        lon, lat = self.get_lonlat_arrays(**kwargs)
         x, y = mapping(lon, lat)
         dy, dx = [np.max([
             np.abs(np.mean(z[:, 2]-z[:, 1])), 
@@ -514,7 +483,8 @@ class GeoDatasetRead(GeoDatasetBase):
         return kwargs
 
     def get_var_for_nextsim(self, var_name, nbo, 
-        distance=5, on_elements=True, fill_value=np.nan, **kwargs):
+        distance=5, on_elements=True, fill_value=np.nan,
+        data_slice=slice(None)):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -542,8 +512,10 @@ class GeoDatasetRead(GeoDatasetBase):
         if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
             raise ValueError('Can inteporlate only 2D data from netCDF file')
         # get variable as float since interpolating
-        nc_v = self.get_variable_array(
-                var_name).astype(float).filled(np.nan)
+        # - also squeeze to remove any singleton dimensions since fill_nan_gaps
+        #   only works for 2D arrays
+        nc_v = np.squeeze(self.variables[var_name][data_slice]
+                ).astype(float).filled(np.nan)
 
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x

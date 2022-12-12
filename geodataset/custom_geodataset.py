@@ -161,3 +161,15 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         """
         bname = os.path.basename(self.filepath())
         return [dt.datetime.strptime(bname[4:12], '%Y%m%d')]
+
+
+class GLORYS12ModelFile(CustomDatasetRead):
+    """
+    geodataset for GLORYS12ModelFile files
+
+    filenames vary from product to product so just inherit from GeoDatasetRead
+    and set projection (not always correctly set in the netcdf files) (OK in some products but not all)
+    but don't set filename pattern
+    """
+    lonlat_names = ('longitude', 'latitude')
+    pattern = re.compile(r'GLORYS12V1_\d{4}.*.m.nc')
