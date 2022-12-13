@@ -377,17 +377,17 @@ class GeoDatasetRead(GeoDatasetBase):
         return None, None
 
     @staticmethod
-    def parse_data_slice(data_slice, dims):
-        if data_slice is None:
+    def parse_subset(subset, dims):
+        if subset is None:
             return tuple(2 * [slice(None)])
-        return tuple([data_slice.get(d, slice(None)) for d in dims])
+        return tuple([subset.get(d, slice(None)) for d in dims])
 
-    def get_lonlat_arrays(self, data_slice=None):
+    def get_lonlat_arrays(self, subset=None):
         """ Get array with longitude latidtude arrays 
         
         Parameters
         ----------
-        data_slice : dict
+        subset : dict
             for subsetting the domain.
 
         Returns
@@ -395,7 +395,7 @@ class GeoDatasetRead(GeoDatasetBase):
         lonlat_arrays : 2 2D-numpy.arrays
             longitude and latitude
         """        
-        dslice = self.parse_data_slice(data_slice, self.spatial_dim_names)
+        dslice = self.parse_subset(subset, self.spatial_dim_names)
         if not self.is_lonlat_dim:
             return [self.variables[name][dslice]
                     for name in self.lonlat_names]
@@ -488,7 +488,7 @@ class GeoDatasetRead(GeoDatasetBase):
 
     def get_var_for_nextsim(self, var_name, nbo, 
         distance=5, on_elements=True, fill_value=np.nan,
-        data_slice=None):
+        subset=None):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -503,7 +503,7 @@ class GeoDatasetRead(GeoDatasetBase):
             perform interpolation on elements or nodes?
         fill_value : float
             value for filling out of bound regions
-        data_slice : dict
+        subset : dict
             for subsetting the domain.
         
         Returns
@@ -512,14 +512,14 @@ class GeoDatasetRead(GeoDatasetBase):
             values from netCDF interpolated on nextsim mesh
         """
         # get self coordinates
-        nc_lon, nc_lat = self.get_lonlat_arrays(data_slice=data_slice)
+        nc_lon, nc_lat = self.get_lonlat_arrays(subset=subset)
         if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
             raise ValueError('Can inteporlate only 2D data from netCDF file')
         # get variable as float since interpolating
         # - also squeeze to remove any singleton dimensions since fill_nan_gaps
         #   only works for 2D arrays
         ncvar = self.variables[var_name]
-        dslice = self.parse_data_slice(data_slice, ncvar.dimensions)
+        dslice = self.parse_subset(subset, ncvar.dimensions)
         nc_v = np.squeeze(ncvar[dslice]).astype(float).filled(np.nan)
 
         # get elements coordinates in neXtSIM projection
