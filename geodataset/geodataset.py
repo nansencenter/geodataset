@@ -347,12 +347,12 @@ class GeoDatasetRead(GeoDatasetBase):
             name of grid_mapping_variable or "absent"
 
         """
-        if self.is_lonlat_dim:
-            return pyproj.CRS(
-                '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
         crs, v = self.get_grid_mapping_from_cf_attrs()
         if crs:
             return crs, v
+        if self.is_lonlat_dim:
+            return pyproj.CRS(
+                '+proj=longlat +datum=WGS84 +no_defs +type=crs'), 'absent'
         raise InvalidDatasetError
         
     def get_grid_mapping_from_cf_attrs(self):
