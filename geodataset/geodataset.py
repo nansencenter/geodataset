@@ -544,11 +544,11 @@ class GeoDatasetRead(GeoDatasetBase):
         """
         # get self coordinates
         nc_lon, nc_lat = self.get_lonlat_arrays()
-        if len(nc_lon.shape) < 2 or len(nc_lat.shape) < 2:
-            raise ValueError('Can interpolate only 2D data from netCDF file')
         # get variable
         nc_v = self.get_variable_array(var_name, **kwargs
                 ).astype(float).filled(np.nan)
+        if len(nc_v.shape) != 2:
+            raise ValueError('Can interpolate only 2D data from netCDF file')
 
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
