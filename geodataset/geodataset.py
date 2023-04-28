@@ -429,8 +429,8 @@ class GeoDatasetRead(GeoDatasetBase):
                 self.get_variable_array(name, ij_range=ij_range)
                 for name in self.lonlat_names]
         lon_name, lat_name = self.lonlat_names
-        lon = self[lon_name][ij_range[0]:ij_range[1]]
-        lat = self[lat_name][ij_range[2]:ij_range[3]]
+        lon = self[lon_name][ij_range[2]:ij_range[3]]
+        lat = self[lat_name][ij_range[0]:ij_range[1]]
         return np.meshgrid(lon, lat)
 
     def get_area_euclidean(self, mapping, ij_range=(None, None, None, None)):
@@ -519,7 +519,8 @@ class GeoDatasetRead(GeoDatasetBase):
         return kwargs
 
     def get_var_for_nextsim(self, var_name, nbo, 
-        distance=5, on_elements=True, fill_value=np.nan, **kwargs):
+        distance=5, on_elements=True, fill_value=np.nan,
+        ij_range=None, **kwargs):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -534,8 +535,11 @@ class GeoDatasetRead(GeoDatasetBase):
             perform interpolation on elements or nodes?
         fill_value : float
             value for filling out of bound regions
+        ij_range : list(int) or tuple(int)
+            for subsetting in space
+             eg [i0,i1,j0,j1] grabs lon[i0:i1,j0:j1], lat[i0:i1,j0:j1]
         kwargs : dict
-            kwargs for GeoDatasetRead.get_variable_array
+            kwargs for GeoDatasetRead.get_variable_array (time_index)
         
         Returns
         -------
@@ -543,7 +547,8 @@ class GeoDatasetRead(GeoDatasetBase):
             values from netCDF interpolated on nextsim mesh
         """
         # get self coordinates
-        nc_lon, nc_lat = self.get_lonlat_arrays()
+        kw = dict(ij_range=ij_range)
+        nc_lon, nc_lat = self.get_lonlat_arrays(**kw)
         # get variable
         nc_v = self.get_variable_array(var_name, **kwargs
                 ).astype(float).filled(np.nan)

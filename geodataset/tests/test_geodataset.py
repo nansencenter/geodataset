@@ -18,13 +18,17 @@ from geodataset.tests.base_for_tests import BaseForTests
 class GeodatasetTestBase(BaseForTests):
     def setUp(self):
         super().setUp()
-        self.osisaf_filename = os.path.join(os.environ['TEST_DATA_DIR'], "ice_drift_nh_polstere-625_multi-oi_202201011200-202201031200.nc")
+        self.osisaf_filename = os.path.join(os.environ['TEST_DATA_DIR'],
+                "ice_drift_nh_polstere-625_multi-oi_202201011200-202201031200.nc")
         self.osisaf_var = 'dX'
         self.osisaf_units = 'km'
         self.osisaf_std_name = 'sea_ice_x_displacement'
         self.osisaf_max = 49.51771
         self.moorings_filename = os.path.join(os.environ['TEST_DATA_DIR'], "Moorings.nc")
         self.moorings_var = 'sic'
+        # ECMWF forecast file - lon,lat are dims
+        self.ec2_file = os.path.join(os.environ['TEST_DATA_DIR'],
+                "ec2_start20220401.nc")
 
 
 class GeoDatasetBaseTest(GeodatasetTestBase):
@@ -272,18 +276,41 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             ['lat', 'lon', 'dt0', 'lon1', 'lat1', 'dt1',
             'dX', 'dY', 'status_flag', 'uncert_dX_and_dY'])
 
-    def test_get_variable_array(self):
+    def test_get_variable_array_1(self):
+        """ test subsetting """
+        ijr = [63,67,50,60,]
         with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
-            a = ds.get_variable_array('dX')
-            b = ds.get_variable_array('lon')
-        self.assertEqual(a.shape, (177, 119))
+            a = ds.get_variable_array('dX', ij_range=ijr)
+            b = ds.get_variable_array('dX')
+        self.assertEqual(a.shape, (4, 10))
         self.assertEqual(b.shape, (177, 119))
+        self.assertTrue(np.allclose(a, b[63:67,50:60]))
 
-    def test_get_lonlat_arrays(self):
+    def test_get_variable_array_2(self):
+        """ test time_index """
+        ijr = [63,67,50,60,]
         with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
-            lon, lat = ds.get_lonlat_arrays()
-        self.assertEqual(len(lon.shape), 2)
-        self.assertEqual(len(lat.shape), 2)
+            a = ds.get_variable_array('dX', time_index=0, ij_range=ijr)
+            # check without passing time_index
+            self.assertTrue(np.allclose(a,
+                ds.get_variable_array('dX', ij_range=ijr)))
+            b = ds.get_variable_array('lon', ij_range=ijr)
+        self.assertEqual(a.shape, (4, 10))
+        self.assertEqual(b.shape, (4, 10))
+
+    def test_get_lonlat_arrays_1(self):
+        """ test with 2D lon,lat """
+        with GeoDatasetRead(self.osisaf_filename, 'r') as ds:
+            lon, lat = ds.get_lonlat_arrays(ij_range=[0,10,3,7])
+        self.assertEqual(lon.shape, (10,4))
+        self.assertEqual(lat.shape, (10,4))
+
+    def test_get_lonlat_arrays_2(self):
+        """ test with 1D lon,lat """
+        with GeoDatasetRead(self.ec2_file, 'r') as ds:
+            lon, lat = ds.get_lonlat_arrays(ij_range=[0,10,3,7])
+        self.assertEqual(lon.shape, (10,4))
+        self.assertEqual(lat.shape, (10,4))
 
     @patch.multiple(GeoDatasetRead,
             __init__=MagicMock(return_value=None),
@@ -490,12 +517,13 @@ class GeoDatasetReadTest(GeodatasetTestBase):
         nbo.mesh_info.indices = np.array([[0,1,2],])
         nbo.mesh_info.projection.pyproj = pyproj.Proj(3411)
 
+        kw = dict(time_index=1, ij_range='ijr')
         with GeoDatasetRead() as ds:
-            v_pro = ds.get_var_for_nextsim('var_name', nbo, 10)
+            v_pro = ds.get_var_for_nextsim('var_name', nbo, 10, **kw)
 
         self.assertAlmostEqual(v_pro[0], 1.00000402, 1)
-        ds.get_lonlat_arrays.assert_called_once()
-        ds.get_variable_array.assert_called_once_with('var_name')
+        ds.get_lonlat_arrays.assert_called_once_with(ij_range='ijr')
+        ds.get_variable_array.assert_called_once_with('var_name', **kw)
         mock_fng.assert_called_once()
 
 
