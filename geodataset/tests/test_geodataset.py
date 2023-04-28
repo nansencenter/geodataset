@@ -522,7 +522,7 @@ class GeoDatasetReadTest(GeodatasetTestBase):
             v_pro = ds.get_var_for_nextsim('var_name', nbo, 10, **kw)
 
         self.assertAlmostEqual(v_pro[0], 1.00000402, 1)
-        ds.get_lonlat_arrays.assert_called_once_with(ij_range='ijr')
+        ds.get_lonlat_arrays.assert_called_once_with(**kw)
         ds.get_variable_array.assert_called_once_with('var_name', **kw)
         mock_fng.assert_called_once()
 

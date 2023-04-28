@@ -409,13 +409,15 @@ class GeoDatasetRead(GeoDatasetBase):
             return self[var_name][
                 ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
 
-    def get_lonlat_arrays(self, ij_range=(None, None, None, None)):
+    def get_lonlat_arrays(self, ij_range=(None, None, None, None), **kwargs):
         """ Get array with longitude latidtude arrays 
         
         Parameters
         ----------
         ij_range : tuple with 4 ints
             start/stop along i and j (y and x) axis
+        kwargs : dict
+            dummy
 
         Returns
         -------
@@ -433,40 +435,44 @@ class GeoDatasetRead(GeoDatasetBase):
         lat = self[lat_name][ij_range[0]:ij_range[1]]
         return np.meshgrid(lon, lat)
 
-    def get_area_euclidean(self, mapping, ij_range=(None, None, None, None)):
+    def get_area_euclidean(self, mapping, **kwargs):
         """
         Calculates element area from netcdf file
         Assumes regular grid in the given projection
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         mapping : pyproj.Proj
             translate from lonlat to projected coordinates
-        ij_range : tuple with 4 ints
-            start/stop along i and j (y and x) axis
+        kwargs : dict
+            for GeoDatasetRead.get_lonlat_arrays
 
-        Returns:
-        --------
-        * area (float)
+        Returns
+        -------
+        area : float
         """
-        lon, lat = self.get_lonlat_arrays(ij_range=ij_range)
+        lon, lat = self.get_lonlat_arrays(**kwargs)
         x, y = mapping(lon, lat)
         dy, dx = [np.max([
-            np.abs(np.mean(z[:, 2]-z[:, 1])), 
-            np.abs(np.mean(z[1, :]-z[0, :]))])
-            for z in [y, x]]
-        return np.abs(dx*dy)
+            np.abs(np.mean(z[:, 2] - z[:, 1])),
+            np.abs(np.mean(z[1, :] - z[0, :])),
+            ]) for z in [y, x]]
+        return np.abs(dx * dy)
 
-    def get_bbox(self, mapping):
+    def get_bbox(self, mapping, **kwargs):
         """ Get bounding box (extent)
-        Parameters:
-        * mapping: pyproj mapping
+        Parameters
+        ----------
+        mapping: pyproj mapping
+        kwargs : dict
+            for GeoDatasetRead.get_lonlat_arrays
 
-        Returns:
-        * bbox = [xmin, xmax, ymin, ymax], where x,y are coordinates specified by mapping
+        Returns
+        -------
+        bbox : list(float)
+            [xmin, xmax, ymin, ymax], where x,y are coordinates specified by mapping
         """
-
-        lon, lat = self.get_lonlat_arrays()
+        lon, lat = self.get_lonlat_arrays(**kwargs)
         x, y = mapping(lon, lat)
         return [x.min(), x.max(), y.min(), y.max()]
 
@@ -519,8 +525,7 @@ class GeoDatasetRead(GeoDatasetBase):
         return kwargs
 
     def get_var_for_nextsim(self, var_name, nbo, 
-        distance=5, on_elements=True, fill_value=np.nan,
-        ij_range=None, **kwargs):
+        distance=5, on_elements=True, fill_value=np.nan, **kwargs):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -539,7 +544,8 @@ class GeoDatasetRead(GeoDatasetBase):
             for subsetting in space
              eg [i0,i1,j0,j1] grabs lon[i0:i1,j0:j1], lat[i0:i1,j0:j1]
         kwargs : dict
-            kwargs for GeoDatasetRead.get_variable_array (time_index)
+            for GeoDatasetRead.get_variable_array and
+            GeoDatasetRead.get_lonlat_arrays
         
         Returns
         -------
@@ -547,8 +553,7 @@ class GeoDatasetRead(GeoDatasetBase):
             values from netCDF interpolated on nextsim mesh
         """
         # get self coordinates
-        kw = dict(ij_range=ij_range)
-        nc_lon, nc_lat = self.get_lonlat_arrays(**kw)
+        nc_lon, nc_lat = self.get_lonlat_arrays(**kwargs)
         # get variable
         nc_v = self.get_variable_array(var_name, **kwargs
                 ).astype(float).filled(np.nan)
