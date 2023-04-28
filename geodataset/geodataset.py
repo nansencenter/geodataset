@@ -409,7 +409,6 @@ class GeoDatasetRead(GeoDatasetBase):
             return self[var_name][
                 ij_range[0]:ij_range[1], ij_range[2]:ij_range[3]]
 
-
     def get_lonlat_arrays(self, ij_range=(None, None, None, None)):
         """ Get array with longitude latidtude arrays 
         
@@ -420,13 +419,19 @@ class GeoDatasetRead(GeoDatasetBase):
 
         Returns
         -------
-        lonlat_arrays : 2 2D-numpy.arrays
-            longitude and latitude
-
+        lon : numpy.ndarray
+            2D array with longitude
+        lat : numpy.ndarray
+            2D array with latitude
         """        
-        return [
-            self.get_variable_array(name, ij_range) 
-            for name in self.lonlat_names]
+        if not self.is_lonlat_dim:
+            return [
+                self.get_variable_array(name, ij_range=ij_range)
+                for name in self.lonlat_names]
+        lon_name, lat_name = self.lonlat_names
+        lon = self[lon_name][ij_range[0]:ij_range[1]]
+        lat = self[lat_name][ij_range[2]:ij_range[3]]
+        return np.meshgrid(lon, lat)
 
     def get_area_euclidean(self, mapping, ij_range=(None, None, None, None)):
         """
