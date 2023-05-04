@@ -431,8 +431,9 @@ class GeoDatasetRead(GeoDatasetBase):
                 self.get_variable_array(name, ij_range=ij_range)
                 for name in self.lonlat_names]
         lon_name, lat_name = self.lonlat_names
-        lon = self[lon_name][ij_range[2]:ij_range[3]]
-        lat = self[lat_name][ij_range[0]:ij_range[1]]
+        i0, i1, j0, j1 = ij_range
+        lon = self[lon_name][j0:j1]
+        lat = self[lat_name][i0:i1]
         return np.meshgrid(lon, lat)
 
     def get_area_euclidean(self, mapping, **kwargs):
