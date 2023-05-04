@@ -1,29 +1,30 @@
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
 from geodataset.custom_geodataset import (
-    CmemsMetIceChart, 
+    CmemsMetIceChart,
     Dist2Coast,
     Etopo,
-    JaxaAmsr2IceConc, 
-    NerscDeformation, 
-    NerscIceType, 
+    JaxaAmsr2IceConc,
+    NERSCDeformation,
+    NERSCIceType,
+    NERSCSeaIceAge,
     OsisafDriftersNextsim,
     SmosIceThickness,
     UniBremenAlbedoMPF,
-    NERSCSeaIceAge,
 )
 
+
 custom_read_classes = [
-    CmemsMetIceChart, 
+    CmemsMetIceChart,
     Dist2Coast,
     Etopo,
-    JaxaAmsr2IceConc, 
-    NerscDeformation, 
-    NerscIceType,
+    JaxaAmsr2IceConc,
+    NERSCDeformation,
+    NERSCIceType,
+    NERSCSeaIceAge,
     OsisafDriftersNextsim,
     SmosIceThickness,
     UniBremenAlbedoMPF,
-    NERSCSeaIceAge,
     # always last:
     GeoDatasetRead,
 ]
