@@ -38,15 +38,10 @@ class CmemsMetIceChart(CustomDatasetRead):
 class Dist2Coast(CustomDatasetRead):
     pattern = re.compile(r'dist2coast_4deg.nc')
     lonlat_names = 'lon', 'lat'
-    def get_lonlat_arrays(self):
-        return np.meshgrid(self['lon'][:], self['lat'][:])
 
 
 class Etopo(CustomDatasetRead):
     pattern = re.compile(r'ETOPO_Arctic_\d{1,2}arcmin.nc')
-
-    def get_lonlat_arrays(self):
-        return np.meshgrid(self['lon'][:], self['lat'][:])
 
 
 class JaxaAmsr2IceConc(CustomDatasetRead):
@@ -55,19 +50,44 @@ class JaxaAmsr2IceConc(CustomDatasetRead):
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
 
 
-class NerscSarProducts(CustomDatasetRead):
+class NERSCProductBase(CustomDatasetRead):
     lonlat_names = 'absent', 'absent'
-    def get_lonlat_arrays(self):
-        x_grd, y_grd = np.meshgrid(self['x'][:], self['y'][:])
+
+    def get_lonlat_arrays(self, ij_range=(None,None,None,None), **kwargs):
+        """
+        Return lon,lat as 2D arrays
+
+        Parameters
+        ----------
+        ij_range : tuple(int)
+            - [i0, i1, j0, j1]
+            - pixel indices for subsetting
+            - return lon[i0:i1+1,j0:j1+1], lat[i0:i1+1,j0:j1+1]
+                instead of full arrays
+        dummy kwargs
+
+        Returns
+        -------
+        lon : numpy.ndarray
+            2D array with longitudes of pixel centers
+        lat : numpy.ndarray
+            2D array with latitudes of pixel centers
+        """
+        i0, i1, j0, j1 = ij_range
+        x_grd, y_grd = np.meshgrid(self['x'][j0:j1], self['y'][i0:i1])
         return self.projection(x_grd, y_grd, inverse=True)
     
 
-class NerscDeformation(NerscSarProducts):
+class NERSCDeformation(NERSCProductBase):
     pattern = re.compile(r'arctic_2km_deformation_\d{8}T\d{6}.nc')
 
 
-class NerscIceType(NerscSarProducts):
+class NERSCIceType(NERSCProductBase):
     pattern = re.compile(r'arctic_2km_icetype_\d{8}T\d{6}.nc')
+
+
+class NERSCSeaIceAge(NERSCProductBase):
+    pattern = re.compile(r'arctic25km_sea_ice_age_v2p0_\d{8}.nc')
 
 
 class OsisafDriftersNextsim(CustomDatasetRead):
@@ -91,7 +111,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
     pattern = re.compile(r'mpd_\d{8}.nc|mpd_\d{8}_NR.nc') # after 2020, filenames have _NR suffix
 
     @staticmethod
-    def get_xy_arrays(ij_range=None):
+    def get_xy_arrays(ij_range=(None,None,None,None), **kwargs):
         """
         Grid info from
         https://nsidc.org/data/polar-stereo/ps_grids.html
@@ -99,11 +119,12 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
 
         Parameters:
         -----------
-        ij_range : list(int)
+        ij_range : tuple(int)
             - [i0, i1, j0, j1]
             - pixel indices for subsetting
             - return x[i0:i1+1,j0:j1+1], y[i0:i1+1,j0:j1+1]
                 instead of full arrays
+        dummy kwargs
 
         Returns:
         --------
@@ -128,10 +149,8 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
                 .5e3 * (qx[:-1] + qx[1:]),
                 .5e3 * (qy[:-1] + qy[1:]),
                 )
-        if ij_range is not None:
-            i0, i1, j0, j1 = ij_range
-            return px[i0:i1+1,j0:j1+1], py[i0:i1+1,j0:j1+1]
-        return px, py
+        i0, i1, j0, j1 = ij_range
+        return px[i0:i1+1,j0:j1+1], py[i0:i1+1,j0:j1+1]
 
     def get_lonlat_arrays(self, **kwargs):
         """
