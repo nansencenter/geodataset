@@ -2,7 +2,7 @@ import datetime as dt
 from functools import cached_property
 
 from netCDF4 import Dataset
-import netcdftime
+from netcdftime import num2date
 import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
@@ -57,7 +57,8 @@ class GeoDatasetBase(Dataset):
         atts = vars(self.variables[self.time_name])
         cal = atts.get('calendar', 'standard')
         units = atts['units']
-        datetimes = [netcdftime.num2date(t, units, calendar=cal) for t in tdata]
+        datetimes = [num2date(t, units, calendar=cal)
+                for t in tdata.flatten()]
         return np.array(datetimes).reshape(tdata.shape)
 
     @cached_property
