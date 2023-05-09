@@ -150,7 +150,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
                 .5e3 * (qy[:-1] + qy[1:]),
                 )
         i0, i1, j0, j1 = ij_range
-        return px[i0:i1+1,j0:j1+1], py[i0:i1+1,j0:j1+1]
+        return px[i0:i1,j0:j1], py[i0:i1,j0:j1]
 
     def get_lonlat_arrays(self, **kwargs):
         """
