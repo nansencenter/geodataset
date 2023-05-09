@@ -526,8 +526,7 @@ class GeoDatasetRead(GeoDatasetBase):
         )
         return kwargs
 
-    def get_var_for_nextsim(self, var_name, nbo, 
-        distance=5, on_elements=True, fill_value=np.nan, **kwargs):
+    def interp_to_points(self, var_name, lon, lat, distance=5, fill_value=np.nan, **kwargs):
         """ Interpolate netCDF data onto mesh from NextsimBin object
         
         Parameters
@@ -562,6 +561,59 @@ class GeoDatasetRead(GeoDatasetBase):
         if len(nc_v.shape) != 2:
             raise ValueError('Can interpolate only 2D data from netCDF file')
 
+        # transform to common coordinate system if needed
+        if not self.is_lonlat_dim: 
+            nc_x, nc_y = self.get_xy_dims_from_lonlat(nc_lon, nc_lat)
+            xout, yout = self.projection(lon, lat)
+        else:
+            nc_x, nc_y = nc_lon[0], nc_lat[:,0]
+            xout, yout = lon, lat
+        
+        # fill nan gaps to avoid land contamination
+        nc_v = fill_nan_gaps(nc_v, distance)
+        # swap Y axis if needed
+        y_step = int(np.sign(np.mean(np.diff(nc_y))))
+        # make interpolator
+        rgi = RegularGridInterpolator((nc_y[::y_step], nc_x), nc_v[::y_step])
+        # interpolate only values within self bbox
+        gpi = ((xout > nc_x.min()) * 
+            (xout < nc_x.max()) *
+            (yout > nc_y.min()) *
+            (yout < nc_y.max()))
+        v_pro = np.full_like(xout, fill_value, dtype=float)
+        v_pro[gpi] = rgi((yout[gpi], xout[gpi]))
+        # replace remaining NaN's (inside the domain, but not filled by fill_nan_gaps)
+        v_pro[np.isnan(v_pro)] = fill_value
+        return v_pro
+
+    def get_var_for_nextsim(self, var_name, nbo, on_elements=True, **kwargs):
+        """ Interpolate netCDF data onto mesh from NextsimBin object
+        
+        Parameters
+        ----------
+        var_name : str
+            name of variable
+        nbo : NextsimBin
+            nextsim bin object with mesh_info attribute
+        distance : int
+            extrapolation distance (in pixels) to avoid land contamintation
+        on_elements : bool
+            perform interpolation on elements or nodes?
+        fill_value : bool
+            value for filling out of bound regions
+        ij_range : list(int) or tuple(int)
+            for subsetting in space
+             eg [i0,i1,j0,j1] grabs lon[i0:i1,j0:j1], lat[i0:i1,j0:j1]
+        kwargs : dict
+            for GeoDatasetRead.get_variable_array and
+            GeoDatasetRead.get_lonlat_arrays
+        
+        Returns
+        -------
+        v_pro : 1D nupy.array
+            values from netCDF interpolated on nextsim mesh
+        """
+
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
         nb_y = nbo.mesh_info.nodes_y
@@ -571,27 +623,4 @@ class GeoDatasetRead(GeoDatasetBase):
         
         # transform nextsim coordinates to lon/lat
         nb_x, nb_y = nbo.mesh_info.projection.pyproj(nb_x, nb_y, inverse=True)
-            
-        # transform to common coordinate system if needed
-        if not self.is_lonlat_dim: 
-            nc_x, nc_y = self.get_xy_dims_from_lonlat(nc_lon, nc_lat)
-            nb_x, nb_y = self.projection(nb_x, nb_y)
-        else:
-            nc_x, nc_y = nc_lon[0], nc_lat[:,0]
-        
-        # fill nan gaps to avoid land contamination
-        nc_v = fill_nan_gaps(nc_v, distance)
-        # swap Y axis if needed
-        y_step = int(np.sign(np.mean(np.diff(nc_y))))
-        # make interpolator
-        rgi = RegularGridInterpolator((nc_y[::y_step], nc_x), nc_v[::y_step])
-        # interpolate only values within self bbox
-        gpi = ((nb_x > nc_x.min()) * 
-            (nb_x < nc_x.max()) *
-            (nb_y > nc_y.min()) *
-            (nb_y < nc_y.max()))
-        v_pro = np.full_like(nb_x, fill_value, dtype=float)
-        v_pro[gpi] = rgi((nb_y[gpi], nb_x[gpi]))
-        # replace remaining NaN's (inside the domain, but not filled by fill_nan_gaps)
-        v_pro[np.isnan(v_pro)] = fill_value
-        return v_pro
+        return self.interp_to_points(var_name, nb_x, nb_y, **kwargs)
