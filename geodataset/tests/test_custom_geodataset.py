@@ -34,8 +34,8 @@ class UniBremenAlbedoMPFBaseTest(BaseForTests):
         """ test get_xy_arrays with ij_range passed """
         x0, y0 = UniBremenAlbedoMPF.get_xy_arrays()
         x, y = UniBremenAlbedoMPF.get_xy_arrays(ij_range=[3,10,6,21])
-        self.assertTrue(np.allclose(x0[3:11,6:22], x))
-        self.assertTrue(np.allclose(y0[3:11,6:22], y))
+        self.assertTrue(np.allclose(x0[3:10,6:21], x))
+        self.assertTrue(np.allclose(y0[3:10,6:21], y))
 
     @patch.multiple(UniBremenAlbedoMPF,
             __init__=MagicMock(return_value=None),
