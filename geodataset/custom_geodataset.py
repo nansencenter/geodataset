@@ -108,7 +108,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
     grid_mapping = (pyproj.CRS.from_proj4(
             '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
             '+ellps=WGS84 +units=m +no_defs'), 'absent')
-    pattern = re.compile(r'mpd_\d{8}.nc|mpd_\d{8}_NR.nc') # after 2020, filenames have _NR suffix
+    pattern = re.compile(r'mpd1_\d{8}.nc')
 
     @staticmethod
     def get_xy_arrays(ij_range=(None,None,None,None), **kwargs):
@@ -179,4 +179,6 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
             all the time values converted to datetime objects
         """
         bname = os.path.basename(self.filepath())
-        return [dt.datetime.strptime(bname[4:12], '%Y%m%d')]
+        datestr = bname.split('_')[1][:8]
+        return [dt.datetime.strptime(datestr, '%Y%m%d')
+                + dt.timedelta(hours=12)]
