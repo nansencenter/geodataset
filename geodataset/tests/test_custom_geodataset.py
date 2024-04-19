@@ -10,13 +10,13 @@ import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
 
-from geodataset.custom_geodataset import UniBremenAlbedoMPF
+from geodataset.custom_geodataset import UniBremenAlbedoMPF, NERSCProductBase
 
 from geodataset.utils import InvalidDatasetError
 from geodataset.tests.base_for_tests import BaseForTests
 
 
-class UniBremenAlbedoMPFBaseTest(BaseForTests):
+class UniBremenAlbedoMPFTest(BaseForTests):
 
     def test_get_xy_arrays_1(self):
         """ test get_xy_arrays with default options """
