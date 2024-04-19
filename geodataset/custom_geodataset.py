@@ -62,7 +62,7 @@ class NERSCProductBase(CustomDatasetRead):
         ij_range : tuple(int)
             - [i0, i1, j0, j1]
             - pixel indices for subsetting
-            - return lon[i0:i1+1,j0:j1+1], lat[i0:i1+1,j0:j1+1]
+            - return lon[i0:i1,j0:j1], lat[i0:i1,j0:j1]
                 instead of full arrays
         dummy kwargs
 
@@ -122,7 +122,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         ij_range : tuple(int)
             - [i0, i1, j0, j1]
             - pixel indices for subsetting
-            - return x[i0:i1+1,j0:j1+1], y[i0:i1+1,j0:j1+1]
+            - return x[i0:i1,j0:j1], y[i0:i1,j0:j1]
                 instead of full arrays
         dummy kwargs
 
@@ -180,5 +180,4 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         """
         bname = os.path.basename(self.filepath())
         datestr = bname.split('_')[1][:8]
-        return [dt.datetime.strptime(datestr, '%Y%m%d')
-                + dt.timedelta(hours=12)]
+        return [dt.datetime.strptime(datestr, '%Y%m%d') + dt.timedelta(hours=12)]
