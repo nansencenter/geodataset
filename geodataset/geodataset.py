@@ -427,15 +427,15 @@ class GeoDatasetRead(GeoDatasetBase):
         lat : numpy.ndarray
             2D array with latitude
         """        
-        if not self.is_lonlat_dim:
-            return [
-                self.get_variable_array(name, ij_range=ij_range)
-                for name in self.lonlat_names]
         lon_name, lat_name = self.lonlat_names
+        lon = self.variables[lon_name]
+        lat = self.variables[lat_name]
         i0, i1, j0, j1 = ij_range
-        lon = self[lon_name][j0:j1]
-        lat = self[lat_name][i0:i1]
-        return np.meshgrid(lon, lat)
+        slat = slice(i0, i1)
+        slon = slice(j0, j1)
+        if lon.ndim == 2:
+            return [a[slat, slon] for a in (lon, lat)]
+        return np.meshgrid(lon[slon], lat[slat])
 
     def get_area_euclidean(self, mapping, **kwargs):
         """
