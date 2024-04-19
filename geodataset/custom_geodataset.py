@@ -76,7 +76,7 @@ class NERSCProductBase(CustomDatasetRead):
         i0, i1, j0, j1 = ij_range
         x_grd, y_grd = np.meshgrid(self['x'][j0:j1], self['y'][i0:i1])
         return self.projection(x_grd, y_grd, inverse=True)
-    
+
 
 class NERSCDeformation(NERSCProductBase):
     pattern = re.compile(r'arctic_2km_deformation_\d{8}T\d{6}.nc')
@@ -87,7 +87,7 @@ class NERSCIceType(NERSCProductBase):
 
 
 class NERSCSeaIceAge(NERSCProductBase):
-    pattern = re.compile(r'arctic25km_sea_ice_age_v2p0_\d{8}.nc')
+    pattern = re.compile(r'arctic25km_sea_ice_age_v2p1_\d{8}.nc')
 
 
 class OsisafDriftersNextsim(CustomDatasetRead):
