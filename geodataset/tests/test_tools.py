@@ -29,7 +29,6 @@ class ToolsTests(BaseForTests):
 
     def test_get_lonlat_arrays(self):
         for nc_file in self.nc_files:
-            print(nc_file)
             with self.subTest(nc_file=nc_file):
                 with open_netcdf(nc_file) as ds:
                     if not ds.is_lonlat_2d:

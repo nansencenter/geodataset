@@ -55,24 +55,53 @@ class UniBremenAlbedoMPFBaseTest(BaseForTests):
             __init__=MagicMock(return_value=None),
             filepath=DEFAULT,
             )
-    def test_datetimes_1(self, **kwargs):
-        """ test for older filename """
-        dto = dt.datetime(2017,5,1)
+    def test_datetimes(self, **kwargs):
+        dto = dt.datetime(2023,5,1,12)
         kwargs['filepath'].return_value = dto.strftime('a/b/mpd_%Y%m%d.nc')
         obj = UniBremenAlbedoMPF()
         self.assertEqual(obj.datetimes, [dto])
 
 
-    @patch.multiple(UniBremenAlbedoMPF,
+class NERSCProductBaseTest(BaseForTests):
+
+    @property
+    def x(self):
+        return np.linspace(0.,1.,6)
+
+    @property
+    def y(self):
+        return np.linspace(1.,2.,8)
+
+    @patch.multiple(NERSCProductBase,
             __init__=MagicMock(return_value=None),
-            filepath=DEFAULT,
+            __getitem__=DEFAULT,
+            projection=DEFAULT,
             )
-    def test_datetimes_2(self, **kwargs):
-        """ test for newer filename """
-        dto = dt.datetime(2021,5,1)
-        kwargs['filepath'].return_value = dto.strftime('a/b/mpd_%Y%m%d_NR.nc')
-        obj = UniBremenAlbedoMPF()
-        self.assertEqual(obj.datetimes, [dto])
+    def test_get_lonlat_arrays(self, __getitem__, projection):
+        """ test for older filename """
+        def mock_getitem(key):
+            if key == "x":
+                return self.x
+            return self.y
+
+        obj = NERSCProductBase()
+        __getitem__.side_effect = mock_getitem
+        projection.return_value = ('lon', 'lat')
+
+        i0 = 2
+        i1 = 5
+        j0 = 1
+        j1 = 6
+        x0, y0 = np.meshgrid(self.x[j0:j1], self.y[i0:i1])
+
+        lon, lat = obj.get_lonlat_arrays(ij_range=(i0, i1, j0, j1))
+        self.assertEqual(lon, 'lon')
+        self.assertEqual(lat, 'lat')
+        self.assertEqual(__getitem__.mock_calls, [call('x'), call('y')])
+        x, y = projection.mock_calls[0][1]
+        self.assertTrue(np.allclose(x, x0))
+        self.assertTrue(np.allclose(y, y0))
+        self.assertEqual(projection.mock_calls[0][2], dict(inverse=True))
 
 
 if __name__ == "__main__":
