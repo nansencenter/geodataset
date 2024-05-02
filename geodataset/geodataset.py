@@ -14,7 +14,7 @@ from geodataset.utils import InvalidDatasetError, fill_nan_gaps
 
 class GeoDatasetBase(Dataset):
     """ Abstract wrapper for netCDF4.Dataset for common input or ouput tasks """
-    lonlat_names = None
+    lonlat_names = None, None
     projection = None
     time_name = 'time'
     is_lonlat_2d = True
@@ -69,6 +69,9 @@ class GeoDatasetBase(Dataset):
         is_lonlat_dim : bool
             True if lon,lat are dimensions
         """
+        lon_name, lat_name = self.lonlat_names
+        if lon_name is None:
+            return False
         return (self.lonlat_names[0] in self.dimensions)
 
     @cached_property
@@ -82,6 +85,21 @@ class GeoDatasetBase(Dataset):
         if self.time_name is None:
             return []
         return list(self.convert_time_data(self.variables[self.time_name][:]))
+
+    @cached_property
+    def datetime_bounds(self):
+        """
+        Returns:
+        --------
+        datetime_bounds : list(datetime.datetime)
+            all the time values converted to datetime objects
+        """
+        if self.time_name is None:
+            return []
+        tvar = self.variables[self.time_name]
+        if hasattr(tvar, 'bounds'):
+            return list(self.convert_time_data(self.variables[tvar.bounds][:]))
+        return []
 
     def get_nearest_date(self, pivot):
         """ Get date from the Dataset closest to the input date
@@ -260,16 +278,13 @@ class GeoDatasetRead(GeoDatasetBase):
         -------
         lon_var_name : str
         lat_var_name : str
-        
         """
-        lon_standard_name = 'longitude'
-        lat_standard_name = 'latitude'
         lon_var_name = lat_var_name = None
         for var_name, var_val in self.variables.items():
             if 'standard_name' in var_val.ncattrs():
-                if var_val.standard_name == lon_standard_name:
+                if var_val.standard_name == 'longitude':
                     lon_var_name = var_name
-                if var_val.standard_name == lat_standard_name:
+                if var_val.standard_name == 'latitude':
                     lat_var_name = var_name
             if lon_var_name and lat_var_name:
                 return lon_var_name, lat_var_name

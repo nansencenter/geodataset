@@ -87,7 +87,7 @@ class NERSCIceType(NERSCProductBase):
 
 
 class NERSCSeaIceAge(NERSCProductBase):
-    pattern = re.compile(r'arctic25km_sea_ice_age_v2p0_\d{8}.nc')
+    pattern = re.compile(r'arctic25km_sea_ice_age_v2p1_\d{8}.nc')
 
 
 class OsisafDriftersNextsim(CustomDatasetRead):
