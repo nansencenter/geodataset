@@ -1,7 +1,6 @@
 import os
 import re
 import datetime as dt
-
 import numpy as np
 import pyproj
 
@@ -48,6 +47,27 @@ class JaxaAmsr2IceConc(CustomDatasetRead):
     pattern = re.compile(r'Arc_\d{8}_res3.125_pyres.nc')
     lonlat_names = 'longitude', 'latitude'
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
+
+    @property
+    def datetime_bounds(self):
+        """
+        Datetimes are the start and end of day
+
+        Returns:
+        --------
+        datetime_bounds : list(np.array)
+            each element is an array [dto1, dto2], where
+            hi
+            dto1: datetime.datetime
+                start of observation interval
+            dto2: datetime.datetime
+                end of observation interval
+        """
+        dto = self.datetimes[0]
+        return [np.array([
+                dto - dt.timedelta(hours=12),
+                dto + dt.timedelta(hours=12),
+                ])]
 
 
 class NERSCProductBase(CustomDatasetRead):
@@ -99,8 +119,22 @@ class OsisafDriftersNextsim(CustomDatasetRead):
 
 
 class SmosIceThickness(CustomDatasetRead):
-    pattern = re.compile(r'SMOS_Icethickness_v3.2_north_\d{8}.nc')
+    pattern = re.compile(r'SMOS_Icethickness_v\d{1}.\d{1}_north_\d{8}.nc')
     grid_mapping = pyproj.CRS.from_epsg(3411), 'absent'
+
+    @property
+    def datetime_bounds(self):
+        """
+        Returns:
+        --------
+        datetime_bounds : list(datetime.datetime)
+            all the bounding time values converted to datetime objects
+        """
+        bnds = []
+        delt = dt.timedelta(.5) # daily dataset so set limits to start and finish of current day
+        for dto in self.datetimes:
+            bnds += [[dto - delt, dto + delt]]
+        return bnds
 
 
 class UniBremenAlbedoMPF(CustomDatasetRead):
@@ -182,3 +216,24 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         datestr = bname.split('_')[1][:8]
         return [dt.datetime.strptime(datestr, '%Y%m%d')
                 + dt.timedelta(hours=12)]
+
+    @property
+    def datetime_bounds(self):
+        """
+        Datetimes are the start and end of day
+
+        Returns:
+        --------
+        datetime_bounds : list(np.array)
+            each element is an array [dto1, dto2], where
+            hi
+            dto1: datetime.datetime
+                start of observation interval
+            dto2: datetime.datetime
+                end of observation interval
+        """
+        dto = self.datetimes[0]
+        return [np.array([
+                dto - dt.timedelta(hours=12),
+                dto + dt.timedelta(hours=12),
+                ])]
