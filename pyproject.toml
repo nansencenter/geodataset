@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geodataset"
+version = "0.3.2"
+authors = [
+    {name = "Anton Korosov", email = "Anton.Korosov@nersc.no"},
+    {name = "Timothy Williams"}
+]
+description = "Extension of netDCF4.Dataset for geospatial data"
+readme = "README.md"
+license = {text = "GPLv3"}
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "cartopy",
+    "netCDF4",
+    "numpy",
+    "pyproj",
+    "pyresample",
+    "xarray"
+]

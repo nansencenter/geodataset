@@ -1,8 +1,7 @@
 import datetime as dt
 from functools import cached_property
 
-from netCDF4 import Dataset
-from netcdftime import num2date
+from netCDF4 import Dataset, num2date
 import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
