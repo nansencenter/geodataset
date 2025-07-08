@@ -3,6 +3,8 @@ import re
 import datetime as dt
 import numpy as np
 import pyproj
+import calendar
+from functools import cached_property
 
 from geodataset.geodataset import GeoDatasetRead
 from geodataset.utils import InvalidDatasetError
@@ -237,3 +239,67 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
                 dto - dt.timedelta(hours=12),
                 dto + dt.timedelta(hours=12),
                 ])]
+
+
+class PIOMASModelFile(CustomDatasetRead):
+
+    grid_mapping = (pyproj.CRS.from_proj4(
+            '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 '
+            '+ellps=WGS84 +units=m +no_defs'), 'absent')
+    pattern = re.compile(r'PIOMAS_\d{4}.nc')
+
+    @cached_property
+    def is_lonlat_dim(self):
+        """
+        Returns:
+        --------
+        is_lonlat_dim : bool
+            True if lon,lat are dimensions
+        """
+        return True
+
+    def get_lonlat_arrays(self, ij_range=(None, None, None, None), **kwargs):
+        """ Get array with longitude latidtude arrays
+
+        Parameters
+        ----------
+        ij_range : tuple with 4 ints
+            start/stop along i and j (y and x) axis
+        kwargs : dict
+            dummy
+
+        Returns
+        -------
+        lon : numpy.ndarray
+            2D array with longitude
+        lat : numpy.ndarray
+            2D array with latitude
+        """
+        i0, i1, j0, j1 = ij_range
+        lon = self['longitude'][i0:i1, j0:j1]
+        lat = self['latitude'][i0:i1, j0:j1]
+        return lon, lat
+
+    @property
+    def datetime_bounds(self):
+        """
+        Datetimes are the start and end of day
+
+        Returns:
+        --------
+        datetime_bounds : list(np.array)
+            each element is an array [dto1, dto2], where
+            hi
+            dto1: datetime.datetime
+                start of observation interval
+            dto2: datetime.datetime
+                end of observation interval
+        """
+        bnds = []
+        for dto in self.datetimes:
+            ym = (dto.year, dto.month)
+            dto1 = dt.datetime(*ym, 1)
+            _, ndays = calendar.monthrange(*ym)
+            dto2 = dto1 + dt.timedelta(ndays)
+            bnds += [np.array([dto1, dto2])]
+        return bnds
