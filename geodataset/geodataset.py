@@ -477,7 +477,7 @@ class GeoDatasetRead(GeoDatasetBase):
         x, y = mapping(lon, lat)
         return [x.min(), x.max(), y.min(), y.max()]
 
-    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e3):
+    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e2):
         """
         Get the x,y vectors for the dimensions if they are not provided in the netcdf file
         Assumes a regular grid in the input projection
