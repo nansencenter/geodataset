@@ -244,7 +244,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
 
 class AWISMOSCS2S3Thickness(CustomDatasetRead):
 
-    pattern = re.compile(r'W_XX-ESA,SMOS_CS2_S3A_S3B,(?:NH|SH)_12P5KM_EASE2_\d{8}_\d{8}_o_v300_01_l4sit.nc')
+    pattern = re.compile(r'W_XX-ESA,SMOS_CS2_S3A_S3B,(?:NH|SH)_12P5KM_EASE2_\d{8}_\d{8}_(?:o|r)_v300_01_l4sit.nc')
 
     @property
     def datetime_bounds(self):
