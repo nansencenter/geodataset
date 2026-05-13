@@ -260,5 +260,5 @@ class AWISMOSCS2S3Thickness(CustomDatasetRead):
             dto2: datetime.datetime
                 end of observation interval
         """
-        t_bnds = self["time_bnds"][:].values
+        t_bnds = self["time_bnds"][:].values.flatten()
         return [self.convert_time_data(t_bnds)]
