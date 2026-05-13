@@ -28,7 +28,7 @@ class GeodatasetTestBase(BaseForTests):
         self.moorings_var = 'sic'
         # ECMWF forecast file - lon,lat are dims
         self.ec2_file = os.path.join(os.environ['TEST_DATA_DIR'],
-                "ec2_start20220401.nc")
+                "ec2_start20240401.nc")
 
 
 class GeoDatasetBaseTest(GeodatasetTestBase):

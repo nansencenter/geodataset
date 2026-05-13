@@ -96,7 +96,7 @@ class NERSCProductBase(CustomDatasetRead):
         i0, i1, j0, j1 = ij_range
         x_grd, y_grd = np.meshgrid(self['x'][j0:j1], self['y'][i0:i1])
         return self.projection(x_grd, y_grd, inverse=True)
-    
+
 
 class NERSCDeformation(NERSCProductBase):
     pattern = re.compile(r'arctic_2km_deformation_\d{8}T\d{6}.nc')
@@ -235,9 +235,10 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
                 end of observation interval
         """
         dto = self.datetimes[0]
+        delt = dt.timedelta(hours=12)
         return [np.array([
-                dto - dt.timedelta(hours=12),
-                dto + dt.timedelta(hours=12),
+                dto - delt,
+                dto + delt,
                 ])]
 
 
@@ -259,5 +260,5 @@ class AWISMOSCS2S3Thickness(CustomDatasetRead):
             dto2: datetime.datetime
                 end of observation interval
         """
-        t_bnds = ds["time_bnds"][:].values
+        t_bnds = self["time_bnds"][:].values
         return [self.convert_time_data(t_bnds)]

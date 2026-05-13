@@ -1,8 +1,7 @@
 import datetime as dt
 from functools import cached_property
 
-from netCDF4 import Dataset
-from netcdftime import num2date
+from netCDF4 import Dataset, num2date
 import numpy as np
 import pyproj
 from pyproj.exceptions import CRSError
@@ -440,15 +439,15 @@ class GeoDatasetRead(GeoDatasetBase):
         lat : numpy.ndarray
             2D array with latitude
         """        
-        if not self.is_lonlat_dim:
-            return [
-                self.get_variable_array(name, ij_range=ij_range)
-                for name in self.lonlat_names]
         lon_name, lat_name = self.lonlat_names
+        lon = self.variables[lon_name]
+        lat = self.variables[lat_name]
         i0, i1, j0, j1 = ij_range
-        lon = self[lon_name][j0:j1]
-        lat = self[lat_name][i0:i1]
-        return np.meshgrid(lon, lat)
+        slat = slice(i0, i1)
+        slon = slice(j0, j1)
+        if lon.ndim == 2:
+            return [a[slat, slon] for a in (lon, lat)]
+        return np.meshgrid(lon[slon], lat[slat])
 
     def get_area_euclidean(self, mapping, **kwargs):
         """
@@ -491,7 +490,7 @@ class GeoDatasetRead(GeoDatasetBase):
         x, y = mapping(lon, lat)
         return [x.min(), x.max(), y.min(), y.max()]
 
-    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e3):
+    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e2):
         """
         Get the x,y vectors for the dimensions if they are not provided in the netcdf file
         Assumes a regular grid in the input projection
@@ -630,8 +629,8 @@ class GeoDatasetRead(GeoDatasetBase):
         # get elements coordinates in neXtSIM projection
         nb_x = nbo.mesh_info.nodes_x
         nb_y = nbo.mesh_info.nodes_y
-        t = nbo.mesh_info.indices
         if on_elements:
+            t = nbo.mesh_info.indices
             nb_x, nb_y = [i[t].mean(axis=1) for i in [nb_x, nb_y]]
         
         # transform nextsim coordinates to lon/lat
