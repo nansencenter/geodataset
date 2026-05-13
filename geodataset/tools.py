@@ -11,6 +11,7 @@ from geodataset.custom_geodataset import (
     OsisafDriftersNextsim,
     SmosIceThickness,
     UniBremenAlbedoMPF,
+    AWISMOSCS2S3Thickness,
 )
 
 
@@ -25,6 +26,7 @@ custom_read_classes = [
     OsisafDriftersNextsim,
     SmosIceThickness,
     UniBremenAlbedoMPF,
+    AWISMOSCS2S3Thickness,
     # always last:
     GeoDatasetRead,
 ]

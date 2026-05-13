@@ -237,3 +237,25 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
                 dto - dt.timedelta(hours=12),
                 dto + dt.timedelta(hours=12),
                 ])]
+
+
+class AWISMOSCS2S3Thickness(CustomDatasetRead):
+
+    pattern = re.compile(r'W_XX-ESA,SMOS_CS2_S3A_S3B,(?:NH|SH)_12P5KM_EASE2_\d{8}_\d{8}_o_v300_01_l4sit.nc')
+
+    @property
+    def datetime_bounds(self):
+        """
+        Datetimes are the start and end of day
+
+        Returns
+        -------
+        datetime_bounds : list(np.array)
+            each element is an array [dto1, dto2], where
+            dto1: datetime.datetime
+                start of observation interval
+            dto2: datetime.datetime
+                end of observation interval
+        """
+        t_bnds = ds["time_bnds"][:].values
+        return [self.convert_time_data(t_bnds)]
