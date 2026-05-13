@@ -56,7 +56,10 @@ class GeoDatasetBase(Dataset):
         atts = vars(self.variables[self.time_name])
         cal = atts.get('calendar', 'standard')
         units = atts['units']
-        return num2date(tdata, units, calendar=cal)
+        cftimes = num2date(tdata, units, calendar=cal)
+        # convert cftimes to datetime.datetime
+        get_datetimes = np.vectorize(lambda t: dt.datetime(*t.timetuple()[:6]))
+        return get_datetimes(cftimes)
 
     @cached_property
     def is_lonlat_dim(self):
