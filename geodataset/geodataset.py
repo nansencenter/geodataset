@@ -57,9 +57,7 @@ class GeoDatasetBase(Dataset):
         atts = vars(self.variables[self.time_name])
         cal = atts.get('calendar', 'standard')
         units = atts['units']
-        datetimes = [num2date(t, units, calendar=cal)
-                for t in tdata.flatten()]
-        return np.array(datetimes).reshape(tdata.shape)
+        return num2date(tdata, units, calendar=cal)
 
     @cached_property
     def is_lonlat_dim(self):
