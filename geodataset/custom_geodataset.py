@@ -57,16 +57,16 @@ class JaxaAmsr2IceConc(CustomDatasetRead):
         --------
         datetime_bounds : list(np.array)
             each element is an array [dto1, dto2], where
-            hi
             dto1: datetime.datetime
                 start of observation interval
             dto2: datetime.datetime
                 end of observation interval
         """
         dto = self.datetimes[0]
+        delt = dt.timedelta(hours=12) # daily dataset so set limits to start and finish of current day
         return [np.array([
-                dto - dt.timedelta(hours=12),
-                dto + dt.timedelta(hours=12),
+                dto - delt,
+                dto + delt,
                 ])]
 
 
@@ -82,7 +82,7 @@ class NERSCProductBase(CustomDatasetRead):
         ij_range : tuple(int)
             - [i0, i1, j0, j1]
             - pixel indices for subsetting
-            - return lon[i0:i1+1,j0:j1+1], lat[i0:i1+1,j0:j1+1]
+            - return lon[i0:i1,j0:j1], lat[i0:i1,j0:j1]
                 instead of full arrays
         dummy kwargs
 
@@ -133,7 +133,10 @@ class SmosIceThickness(CustomDatasetRead):
         bnds = []
         delt = dt.timedelta(.5) # daily dataset so set limits to start and finish of current day
         for dto in self.datetimes:
-            bnds += [[dto - delt, dto + delt]]
+            bnds += [np.array([
+                dto - delt,
+                dto + delt,
+                ])]
         return bnds
 
 
@@ -156,7 +159,7 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         ij_range : tuple(int)
             - [i0, i1, j0, j1]
             - pixel indices for subsetting
-            - return x[i0:i1+1,j0:j1+1], y[i0:i1+1,j0:j1+1]
+            - return x[i0:i1,j0:j1], y[i0:i1,j0:j1]
                 instead of full arrays
         dummy kwargs
 
@@ -226,7 +229,6 @@ class UniBremenAlbedoMPF(CustomDatasetRead):
         --------
         datetime_bounds : list(np.array)
             each element is an array [dto1, dto2], where
-            hi
             dto1: datetime.datetime
                 start of observation interval
             dto2: datetime.datetime
