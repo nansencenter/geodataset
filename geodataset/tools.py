@@ -10,6 +10,7 @@ from geodataset.custom_geodataset import (
     NERSCSeaIceAge,
     OsisafDriftersNextsim,
     SmosIceThickness,
+    DMIASIPConc,
     UniBremenAlbedoMPF,
     AWISMOSCS2S3Thickness,
 )
@@ -25,6 +26,7 @@ custom_read_classes = [
     NERSCSeaIceAge,
     OsisafDriftersNextsim,
     SmosIceThickness,
+    DMIASIPConc,
     UniBremenAlbedoMPF,
     AWISMOSCS2S3Thickness,
     # always last:

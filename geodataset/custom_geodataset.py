@@ -262,3 +262,24 @@ class AWISMOSCS2S3Thickness(CustomDatasetRead):
         """
         t_bnds = self["time_bnds"][:].data.flatten()
         return [self.convert_time_data(t_bnds)]
+
+
+class DMIASIPConc(CustomDatasetRead):
+    pattern = re.compile(r'dmi_asip_seaice_mosaic_arc_l4_\d{8}.nc')
+
+    @property
+    def datetime_bounds(self):
+        """
+        Returns:
+        --------
+        datetime_bounds : list(datetime.datetime)
+            all the bounding time values converted to datetime objects
+        """
+        bnds = []
+        delt = dt.timedelta(.5) # daily dataset so set limits to start and finish of current day
+        for dto in self.datetimes:
+            bnds += [np.array([
+                dto - delt,
+                dto + delt,
+                ])]
+        return bnds
