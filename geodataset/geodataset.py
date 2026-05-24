@@ -567,9 +567,10 @@ class GeoDatasetRead(GeoDatasetBase):
         else:
             nc_x, nc_y = nc_lon[0], nc_lat[:,0]
             xout, yout = lon, lat
-        
-        # fill nan gaps to avoid land contamination
-        nc_v = fill_nan_gaps(nc_v, distance)
+
+        if distance > 0:
+            # fill nan gaps to avoid land contamination
+            nc_v = fill_nan_gaps(nc_v, distance)
         # swap Y axis if needed
         y_step = int(np.sign(np.mean(np.diff(nc_y))))
         # make interpolator
