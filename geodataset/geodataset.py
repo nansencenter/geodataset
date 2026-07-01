@@ -477,10 +477,12 @@ class GeoDatasetRead(GeoDatasetBase):
         x, y = mapping(lon, lat)
         return [x.min(), x.max(), y.min(), y.max()]
 
-    def get_xy_dims_from_lonlat(self, lon, lat, accuracy=1e2):
+    def get_xy_dims_from_lonlat(self, lon, lat):
         """
         Get the x,y vectors for the dimensions if they are not provided in the netcdf file
         Assumes a regular grid in the input projection
+        We round to an accuracy depending on the grid resolution to make sure
+        x,y are evenly spaced
 
         Parameters:
         -----------
@@ -488,9 +490,6 @@ class GeoDatasetRead(GeoDatasetBase):
             2d longitude array, units = degrees_east
         lat : np.ndarray
             2d latitude array, units = degrees_north
-        accuracy : float
-            desired accuracy in m - we round to this accuracy so
-            that x and y are regularly spaced
 
         Returns:
         --------
@@ -502,6 +501,10 @@ class GeoDatasetRead(GeoDatasetBase):
         assert(not self.is_lonlat_dim)
         x = self.projection(lon[0,:], lat[0,:])[0]
         y = self.projection(lon[:,0], lat[:,0])[1]
+
+        # round to accuracy depending on the grid resolution to make sure x,y are evenly spaced
+        dx = np.mean(np.diff(x))
+        accuracy = pow(10, np.floor(np.log10(dx) - 2))
         return [np.round(v/accuracy)*accuracy for v in [x, y]]
 
     def get_proj_info_kwargs(self):
