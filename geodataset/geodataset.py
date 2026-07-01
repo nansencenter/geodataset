@@ -480,9 +480,8 @@ class GeoDatasetRead(GeoDatasetBase):
     def get_xy_dims_from_lonlat(self, lon, lat):
         """
         Get the x,y vectors for the dimensions if they are not provided in the netcdf file
-        Assumes a regular grid in the input projection
-        We round to an accuracy depending on the grid resolution to make sure
-        x,y are evenly spaced
+        Assumes a regular grid in the input projection - we round to an accuracy depending on the grid resolution
+        to make sure x,y are evenly spaced
 
         Parameters:
         -----------
