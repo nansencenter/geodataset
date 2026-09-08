@@ -144,7 +144,7 @@ class GeoDatasetWrite(GeoDatasetBase):
         ncatts = dict(**time_atts)
         ncatts['calendar'] = time_atts.get('calendar', 'standard')
         # time var
-        tvar = self.createVariable('time', 'f8', ('time',), zlib=True)
+        tvar = self.createVariable('time', time_data.dtype, ('time',), zlib=True)
         tvar.setncatts(ncatts)
         tvar[:] = time_data
 
@@ -161,7 +161,7 @@ class GeoDatasetWrite(GeoDatasetBase):
             data for time_bnds variable
         """
         self.createDimension('nv', 2)
-        tbvar = self.createVariable('time_bnds', 'f8', ('time', 'nv'), zlib=True)
+        tbvar = self.createVariable('time_bnds', time_bnds_data.dtype, ('time', 'nv'), zlib=True)
         tbvar.setncattr('units', time_atts['units'])
         tbvar[:] = time_bnds_data
 
@@ -178,7 +178,7 @@ class GeoDatasetWrite(GeoDatasetBase):
         """
         for dim_name, dim_vec in zip(['y', 'x'], [y, x]):
             dst_dim = self.createDimension(dim_name, len(dim_vec))
-            dst_var = self.createVariable(dim_name, 'f8', (dim_name,), zlib=True)
+            dst_var = self.createVariable(dim_name, x.dtype, (dim_name,), zlib=True)
             dst_var.setncattr('standard_name', 'projection_%s_coordinate' %dim_name)
             dst_var.setncattr('units', 'm')
             dst_var.setncattr('axis', dim_name.upper())
@@ -201,7 +201,7 @@ class GeoDatasetWrite(GeoDatasetBase):
                 ]
         dims = tuple(self.spatial_dim_names[::-1])
         for vname, data, units in data_units:
-            dst_var = self.createVariable(vname, 'f8', dims, zlib=True)
+            dst_var = self.createVariable(vname, lon.dtype, dims, zlib=True)
             dst_var.setncattr('standard_name', vname)
             dst_var.setncattr('long_name', vname)
             dst_var.setncattr('units', units)
@@ -498,12 +498,13 @@ class GeoDatasetRead(GeoDatasetBase):
             y coordinate vector, units = m
         """
         assert(not self.is_lonlat_dim)
-        x = self.projection(lon[0,:], lat[0,:])[0]
-        y = self.projection(lon[:,0], lat[:,0])[1]
+        dtype = lon.dtype
+        x = dtype.type(self.projection(lon[0,:], lat[0,:])[0])
+        y = dtype.type(self.projection(lon[:,0], lat[:,0])[1])
 
         # round to accuracy depending on the grid resolution to make sure x,y are evenly spaced
         dx = np.mean(np.diff(x))
-        accuracy = pow(10, np.floor(np.log10(dx) - 2))
+        accuracy = dtype.type(pow(10, np.floor(np.log10(dx) - 2)))
         return [np.round(v/accuracy)*accuracy for v in [x, y]]
 
     def get_proj_info_kwargs(self):
