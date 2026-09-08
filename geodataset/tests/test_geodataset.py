@@ -120,12 +120,12 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         self.assert_mock_has_calls(kwargs['createDimension'],
                 [call('y', ny), call('x', nx)])
         req_calls = [
-                call('y', 'f8', ('y',), zlib=True),
+                call('y', x.dtype, ('y',), zlib=True),
                 call().setncattr('standard_name', 'projection_y_coordinate'),
                 call().setncattr('units', 'm'),
                 call().setncattr('axis', 'Y'),
                 call().__setitem__(slice(None, None, None), y),
-                call('x', 'f8', ('x',), zlib=True),
+                call('x', x.dtype, ('x',), zlib=True),
                 call().setncattr('standard_name', 'projection_x_coordinate'),
                 call().setncattr('units', 'm'),
                 call().setncattr('axis', 'X'),
@@ -147,12 +147,12 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         nc.spatial_dim_names = ['x', 'y']
         nc.set_lonlat(lon, lat)
         req_calls = [
-                call('longitude', 'f8', ('y', 'x'), zlib=True),
+                call('longitude', lon.dtype, ('y', 'x'), zlib=True),
                 call().setncattr('standard_name', 'longitude'),
                 call().setncattr('long_name', 'longitude'),
                 call().setncattr('units', 'degrees_east'),
                 call().__setitem__(slice(None, None, None), lon),
-                call('latitude', 'f8', ('y', 'x'), zlib=True),
+                call('latitude', lon.dtype, ('y', 'x'), zlib=True),
                 call().setncattr('standard_name', 'latitude'),
                 call().setncattr('long_name', 'latitude'),
                 call().setncattr('units', 'degrees_north'),
@@ -174,7 +174,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         nc.set_time_variable(time, time_atts)
         self.assert_mock_has_calls(kwargs['createDimension'], [call('time', None)])
         req_calls = [
-                call('time', 'f8', ('time',), zlib=True), 
+                call('time', time.dtype, ('time',), zlib=True),
                 call().setncatts({'a1': 'A1', 'a2': 'A2', 'units': 'units', 'calendar': 'standard'}),
                 call().__setitem__(slice(None, None, None), time),
                 ]
@@ -195,7 +195,7 @@ class GeoDatasetWriteTest(GeodatasetTestBase):
         nc.set_time_bnds_variable(time_atts, time_bnds)
         self.assert_mock_has_calls(kwargs['createDimension'], [call('nv', 2)])
         req_calls = [
-                call('time_bnds', 'f8', ('time', 'nv'), zlib=True),
+                call('time_bnds', time_bnds.dtype, ('time', 'nv'), zlib=True),
                 call().setncattr('units', 'units'),
                 call().__setitem__(slice(None, None, None), time_bnds),
                 ]
