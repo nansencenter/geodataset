@@ -144,7 +144,7 @@ class GeoDatasetWrite(GeoDatasetBase):
         ncatts = dict(**time_atts)
         ncatts['calendar'] = time_atts.get('calendar', 'standard')
         # time var
-        tvar = self.createVariable('time', time_data.dtype, ('time',), zlib=True)
+        tvar = self.createVariable('time', np.array(time_data).dtype, ('time',), zlib=True)
         tvar.setncatts(ncatts)
         tvar[:] = time_data
 
